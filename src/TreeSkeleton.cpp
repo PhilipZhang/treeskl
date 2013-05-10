@@ -216,6 +216,13 @@ CTreeSkeleton::~CTreeSkeleton()
 // insert a child node to the current node
 void CTreeSkeleton::Insert(float x, float y, float z, float radius)
 {
+	if(radius < 0)
+	{
+		radius = m_pCurNode->m_radius;
+		x = x * 2 * radius + m_pCurNode->m_pos[0];
+		y = y * 2 * radius + m_pCurNode->m_pos[1];
+		z = z * 2 * radius + m_pCurNode->m_pos[2];
+	}
 	CSkeletonNode *pNode = new CSkeletonNode(x, y, z, radius);
 	// if root node doesn't exist, create one.
 	if(m_pRoot == NULL)
