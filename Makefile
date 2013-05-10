@@ -6,7 +6,7 @@
 
 # Creation Date : 10-05-2013
 
-# Last Modified : Fri 10 May 2013 02:16:41 PM CST
+# Last Modified : Fri 10 May 2013 09:55:38 PM CST
 
 # Created By : Philip Zhang 
 
@@ -24,17 +24,26 @@ LIBS = -lX11 -lglut -lGL -lGLU -lm -lGLEW
 
 prog: $(MAIN)
 
-$(MAIN).o : $(SRCPATH)$(MAIN).cpp
+Main.o : $(SRCPATH)Main.cpp
 TreeSkeleton.o : $(SRCPATH)TreeSkeleton.cpp
+GLUtils.o	: $(SHAREDPATH)GLUtils.cpp
 GLTools.o : $(SHAREDPATH)GLTools.cpp
 GLBatch.o : $(SHAREDPATH)GLBatch.cpp
 GLTriangleBatch.o : $(SHAREDPATH)GLTriangleBatch.cpp
 GLShaderManager.o : $(SHAREDPATH)GLShaderManager.cpp
 math3d.o	: $(SHAREDPATH)math3d.cpp
 
-$(MAIN) : $(MAIN).o TreeSkeleton.o
-	$(CC) $(CFLAGS) -o $(MAIN) $(LIBDIRS) $(SRCPATH)$(MAIN).cpp $(SRCPATH)TreeSkeleton.cpp $(SHAREDPATH)GLTools.cpp $(SHAREDPATH)GLBatch.cpp $(SHAREDPATH)GLTriangleBatch.cpp $(SHAREDPATH)GLShaderManager.cpp $(SHAREDPATH)math3d.cpp $(LIBS)
+$(MAIN) : Main.o TreeSkeleton.o GLUtils.o
+	$(CC) $(CFLAGS) -o $(MAIN) $(LIBDIRS) $(SRCPATH)Main.cpp $(SRCPATH)TreeSkeleton.cpp $(SHAREDPATH)GLUtils.cpp $(SHAREDPATH)GLTools.cpp $(SHAREDPATH)GLBatch.cpp $(SHAREDPATH)GLTriangleBatch.cpp $(SHAREDPATH)GLShaderManager.cpp $(SHAREDPATH)math3d.cpp $(LIBS)
 
 clean:
 	rm -f *.o
 
+edit:
+	vi -p src/*.cpp src/*.h
+
+run:
+	./$(MAIN)
+
+add:
+	git add src/* shared/* include/*
