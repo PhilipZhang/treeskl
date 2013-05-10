@@ -4,9 +4,10 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "GLTools.h"
-#include "GLMatrixStack.h"
-#include "GLGeometryTransform.h"
+#include <GLUtils.h>
+#include <GLTools.h>
+#include <GLMatrixStack.h>
+#include <GLGeometryTransform.h>
 #include "TreeSkeleton.h"
 
 extern GLTriangleBatch gb_sphereBatch;
@@ -451,13 +452,28 @@ void CTreeSkeleton::Load(const char *filename)
 
 // execute simplification on the current node
 // and all its sub nodes
-void CTreeSkeleton::Simplify(double max_angle)
+void CTreeSkeleton::Simplify(double max_angle, bool bCurNode)
 {
 	assert(max_angle > 0.0);
 	// if it's null or an end node, return.
 	if(!m_pCurNode)
 		return;
-	m_pCurNode->Simplify(max_angle);
+	if(!m_pRoot)
+		return;
+	if(bCurNode == true)
+	{
+		CSkeletonNode *pChild = m_pCurNode->m_pChild;
+		while(pChild)
+		{
+			pChild->Simplify(max_angle);
+			pChild = pChild->m_pNext;
+		}
+	}
+	else
+	{
+		m_pRoot->Simplify(max_angle);
+		m_pCurNode = m_pRoot;
+	}
 }
 
 void CSkeletonNode::Simplify(double max_angle)
@@ -504,3 +520,27 @@ void CSkeletonNode::Simplify(double max_angle)
 	}
 }
 
+void CTreeSkeleton::Select(M3DVector3f pt)
+{
+	if(m_pRoot)
+		m_pRoot->Select(pt, &m_pCurNode);
+}
+
+void CSkeletonNode::Select(M3DVector3f pt, CSkeletonNode **ppCurNode)
+{
+	static bool bFound = false;
+	if(bFound == true)
+		return;
+	CSkeletonNode *pChild = m_pChild;
+	while(pChild)
+	{
+		if(IsPointInFreeCylinder(m_pos, m_radius, pChild->m_pos, pChild->m_radius, pt))
+		{
+			*ppCurNode = this;
+			bFound = true;
+			return;
+		}
+		pChild->Select(pt, ppCurNode);
+		pChild = pChild->m_pNext;
+	}
+}

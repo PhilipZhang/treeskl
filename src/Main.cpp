@@ -6,18 +6,18 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Fri 10 May 2013 04:42:50 PM CST
+ * Last Modified : Fri 10 May 2013 09:53:02 PM CST
 
  * Created By : Philip Zhang 
 
  _._._._._._._._._._._._._._._._._._._._._.*/
 
-
-#include "GLTools.h"	// OpenGL toolkit
-#include "GLMatrixStack.h"
-#include "GLFrame.h"
-#include "GLFrustum.h"
-#include "GLGeometryTransform.h"
+#include <GLUtils.h>
+#include <GLTools.h>	// OpenGL toolkit
+#include <GLMatrixStack.h>
+#include <GLFrame.h>
+#include <GLFrustum.h>
+#include <GLGeometryTransform.h>
 #include <stdlib.h>
 
 #include <math.h>
@@ -228,26 +228,26 @@ void ShutdownRC(void)
 	glDeleteTextures(2, texture);
 }
 
-void SetSelectedColor()
+void SetGeneralColor()
 {
 	if(!gb_bTexture)
 	{
-		GLfloat vAmbientColor[] = { 0.2f, 0.2f, 0.2f, 0.8f };
-		GLfloat vDiffuseColor[] = { 0.8f, 0.2f, 0.2f, 0.8f };
-		GLfloat vSpecularColor[] = { 0.2f, 0.2f, 0.2f, 0.8f };
+		GLfloat vAmbientColor[] = { 0.2f, 0.2f, 0.2f, 0.9f };
+		GLfloat vDiffuseColor[] = { 0.3f, 0.3f, 0.3f, 0.9f };
+		GLfloat vSpecularColor[] = { 0.3f, 0.3f, 0.3f, 0.9f };
 		glUniform4fv(locAmbient, 1, vAmbientColor);
 		glUniform4fv(locDiffuse, 1, vDiffuseColor);
 		glUniform4fv(locSpecular, 1, vSpecularColor);
 	}
 }
 
-void SetGeneralColor()
+void SetSelectedColor()
 {
 	if(!gb_bTexture)
 	{
-		GLfloat vAmbientColor[] = { 0.2f, 0.2f, 0.2f, 0.8f };
-		GLfloat vDiffuseColor[] = { 0.2f, 0.2f, 0.8f, 0.8f };
-		GLfloat vSpecularColor[] = { 0.2f, 0.2f, 0.2f, 0.8f };
+		GLfloat vAmbientColor[] = { 0.4f, 0.4f, 0.1f, 0.4f };
+		GLfloat vDiffuseColor[] = { 0.4f, 0.4f, 0.0f, 0.4f };
+		GLfloat vSpecularColor[] = { 0.5f, 0.5f, 0.3f, 0.4f };
 		glUniform4fv(locAmbient, 1, vAmbientColor);
 		glUniform4fv(locDiffuse, 1, vDiffuseColor);
 		glUniform4fv(locSpecular, 1, vSpecularColor);
@@ -316,7 +316,6 @@ void MoveCurNode(M3DVector3f vector)
 	GetWorldDirFromView(wol, vector);
 	gb_treeskl.MoveCurNode(wol);
 }
-
 
 // Called to draw scene
 void onDisplay(void)
@@ -489,6 +488,19 @@ void onMouseKey(int button, int state, int x, int y)
 		glutPostRedisplay();
 		break;
 	case GLUT_MIDDLE_BUTTON:
+		{
+			GLFrame eyeFrame;
+			eyeFrame.MoveUp(gb_eye_height);
+			eyeFrame.RotateWorld(gb_eye_theta * 3.1415926 / 180.0, 1.0, 0.0, 0.0);
+			eyeFrame.RotateWorld(gb_eye_phi * 3.1415926 / 180.0, 0.0, 1.0, 0.0);
+			eyeFrame.MoveForward(-gb_eye_radius);
+			M3DMatrix44f mat;
+			eyeFrame.GetCameraMatrix(mat);
+			M3DVector3f pt;
+			bool bSuccess = HitTest(x, y, pt, mat, (float*)gb_viewFrustum.GetProjectionMatrix());
+			if(bSuccess)
+				gb_treeskl.Select(pt);
+		}
 		break;
 	}
 }
@@ -508,8 +520,9 @@ void onKeyboard(unsigned char key, int x, int y)
 		gb_treeskl.Simplify(gb_max_angle * 3.1415926 / 180.0);
 		gb_max_angle += 5.0;
 		break;
-	case 'S':	// select/unselect the model
-		gb_treeskl.Select();
+	case 'S':
+		gb_treeskl.Simplify(gb_max_angle * 3.1415926 / 180.0, false);
+		gb_max_angle += 5.0;
 		break;
 	case 'j':	// select the parent
 		gb_treeskl.Ascent();
