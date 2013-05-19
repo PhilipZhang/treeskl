@@ -602,6 +602,39 @@ void gltMakeCylinder(GLTriangleBatch& cylinderBatch, GLfloat baseRadius, GLfloat
         }
 	cylinderBatch.End();
 	}
+
+void gltMakeLineCube(GLBatch& cubeBatch, GLfloat fRadius)
+{
+    cubeBatch.Begin(GL_LINES, 24);
+	// front 4 lines
+	cubeBatch.Vertex3f(fRadius, fRadius, fRadius);
+	cubeBatch.Vertex3f(fRadius, -fRadius, fRadius);
+	cubeBatch.Vertex3f(fRadius, fRadius, fRadius);
+	cubeBatch.Vertex3f(-fRadius, fRadius, fRadius);
+	cubeBatch.Vertex3f(-fRadius, -fRadius, fRadius);
+	cubeBatch.Vertex3f(fRadius, -fRadius, fRadius);
+	cubeBatch.Vertex3f(-fRadius, -fRadius, fRadius);
+	cubeBatch.Vertex3f(-fRadius, fRadius, fRadius);
+	// back 4 lines
+	cubeBatch.Vertex3f(fRadius, fRadius, -fRadius);
+	cubeBatch.Vertex3f(fRadius, -fRadius, -fRadius);
+	cubeBatch.Vertex3f(fRadius, fRadius, -fRadius);
+	cubeBatch.Vertex3f(-fRadius, fRadius, -fRadius);
+	cubeBatch.Vertex3f(-fRadius, -fRadius, -fRadius);
+	cubeBatch.Vertex3f(fRadius, -fRadius, -fRadius);
+	cubeBatch.Vertex3f(-fRadius, -fRadius, -fRadius);
+	cubeBatch.Vertex3f(-fRadius, fRadius, -fRadius);
+	// middle 4 lines
+	cubeBatch.Vertex3f(-fRadius, fRadius, fRadius);
+	cubeBatch.Vertex3f(-fRadius, fRadius, -fRadius);
+	cubeBatch.Vertex3f(-fRadius, -fRadius, fRadius);
+	cubeBatch.Vertex3f(-fRadius, -fRadius, -fRadius);
+	cubeBatch.Vertex3f(fRadius, fRadius, fRadius);
+	cubeBatch.Vertex3f(fRadius, fRadius, -fRadius);
+	cubeBatch.Vertex3f(fRadius, -fRadius, fRadius);
+	cubeBatch.Vertex3f(fRadius, -fRadius, -fRadius);
+	cubeBatch.End();
+}
 	
 	
 ///////////////////////////////////////////////////////////////////////////////////////

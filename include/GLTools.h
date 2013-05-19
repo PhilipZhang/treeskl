@@ -168,6 +168,7 @@ void gltMakeTorus(GLTriangleBatch& torusBatch, GLfloat majorRadius, GLfloat mino
 void gltMakeSphere(GLTriangleBatch& sphereBatch, GLfloat fRadius, GLint iSlices, GLint iStacks);
 void gltMakeDisk(GLTriangleBatch& diskBatch, GLfloat innerRadius, GLfloat outerRadius, GLint nSlices, GLint nStacks);
 void gltMakeCylinder(GLTriangleBatch& cylinderBatch, GLfloat baseRadius, GLfloat topRadius, GLfloat fLength, GLint numSlices, GLint numStacks);
+void gltMakeLineCube(GLBatch& cubeBatch, GLfloat fRadius);
 void gltMakeCube(GLBatch& cubeBatch, GLfloat fRadius);
 
 // Shader loading support

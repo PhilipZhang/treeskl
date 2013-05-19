@@ -6,7 +6,7 @@
 
 * Creation Date : 06-05-2013
 
-* Last Modified : Fri 10 May 2013 09:47:31 PM CST
+* Last Modified : Sun 19 May 2013 09:01:52 PM CST
 
 * Created By : Philip Zhang 
 
@@ -37,6 +37,9 @@ public:
 	unsigned WritePoint(FILE *fout);
 	void Simplify(double);
 	void Select(M3DVector3f pt, CSkeletonNode **pCurNode);
+	void CheckRange(M3DVector3f maxRange, M3DVector3f minRange);
+	void LinearRadius(float ratio);
+	void SquareRadius();
 public:
 	CSkeletonNode *m_pParent;
 	CSkeletonNode *m_pPrev;
@@ -64,12 +67,15 @@ public:
 	void Next();
 	void Previous();
 	void Display(SetColor General, SetColor Special, unsigned mode);
+	void DisplayVoxel(int nSlicesX);
 	void MoveCurNode(float vector[3]);
 	void ChangeRadius(float increase);
 	void Simplify(double, bool bCurNode = true);
 	void Select(M3DVector3f pt);
 	void Load(const char *filename);
 	void Save(const char *filename, unsigned mode);
+	void LinearRadius(float ratio);
+	void SquareRadius();
 
 protected:
 	CSkeletonNode *m_pRoot;

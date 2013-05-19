@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Fri 10 May 2013 09:53:02 PM CST
+ * Last Modified : Sun 19 May 2013 09:06:47 PM CST
 
  * Created By : Philip Zhang 
 
@@ -33,6 +33,7 @@
 #define MOUSE_DRAG_MAX 0x7FFFFFFF
 #define MOUSE_DRAG_MIN 0xFFFFFFFF
 
+const int gb_max_skl_count = 8;
 GLFrustum           gb_viewFrustum;				// view frustum
 GLMatrixStack       gb_modelViewMatrix;			// modelview matrix stack
 GLMatrixStack       gb_projectionMatrix;		// projection matrix stack
@@ -44,14 +45,17 @@ float				gb_eye_radius = 5.0;		// the distance to view the model
 float				gb_eye_theta = 0.0;			// theta angle of eye
 float				gb_eye_phi = 0.0;			// phi angle of eye
 float				gb_eye_height = 0.0;		// height of eye
+float				gb_linear_ratio = 0.6;
 bool				gb_bTexture = false;		// whether render with texture
 bool				gb_bBlack = true;			// background is black or white
 bool				gb_bCoord = true;			// whether to draw the axis
 bool				gb_bBothDirection = true;	// whether the axis is both directional
 bool				gb_bPoints = false;			// whether render in point mode
+bool				gb_bVoxel = false;
 GLTriangleBatch     gb_sphereBatch;			// batch of sphere
+GLBatch				gb_cubeBatch;			// batch of voxel cube
 GLBatch				gb_axisBatches[6];		// batch of axis
-char				gb_sklList[5][256];		// names of skeleton files
+char				gb_sklList[gb_max_skl_count][256];		// names of skeleton files
 int					gb_sklCount = 0;
 int					gb_winWidth, gb_winHeight;
 
@@ -117,7 +121,7 @@ void FillSklList()
 			strcpy(gb_sklList[gb_sklCount], "./skls/");
 			strcat(gb_sklList[gb_sklCount], dir->d_name);
 			gb_sklCount++;
-			if(gb_sklCount == 5)
+			if(gb_sklCount == gb_max_skl_count)
 				return;
 		}
 	}
@@ -168,6 +172,7 @@ void SetupRC(void)
 
 	// Make the sphere
 	gltMakeSphere(gb_sphereBatch, 1.0f, 52, 26);
+	gltMakeLineCube(gb_cubeBatch, 1.0f);
 
 	// make axis
 	GLfloat vVerts[12][3] = { {0.0, 0.0, 0.0}, {100.0, 0.0, 0.0},
@@ -245,13 +250,23 @@ void SetSelectedColor()
 {
 	if(!gb_bTexture)
 	{
-		GLfloat vAmbientColor[] = { 0.4f, 0.4f, 0.1f, 0.4f };
-		GLfloat vDiffuseColor[] = { 0.4f, 0.4f, 0.0f, 0.4f };
-		GLfloat vSpecularColor[] = { 0.5f, 0.5f, 0.3f, 0.4f };
+		GLfloat vAmbientColor[] = { 0.2f, 0.0f, 0.0f, 0.9f };
+		GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.9f };
+		GLfloat vSpecularColor[] = { 0.1f, 0.0f, 0.0f, 0.9f };
 		glUniform4fv(locAmbient, 1, vAmbientColor);
 		glUniform4fv(locDiffuse, 1, vDiffuseColor);
 		glUniform4fv(locSpecular, 1, vSpecularColor);
 	}
+}
+
+void SetVoxelColor()
+{
+	GLfloat vAmbientColor[] = { 0.5f, 0.5f, 0.0f, 0.1f };
+	GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.1f };
+	GLfloat vSpecularColor[] = { 0.3f, 0.3f, 0.0f, 0.1f };
+	glUniform4fv(locAmbient, 1, vAmbientColor);
+	glUniform4fv(locDiffuse, 1, vDiffuseColor);
+	glUniform4fv(locSpecular, 1, vSpecularColor);
 }
 
 void DrawCoordinateAxis()
@@ -358,7 +373,8 @@ void onDisplay(void)
 	{
 		if(gb_bPoints)
 		{
-			GLfloat vPointColor[] = { 1.0, 1.0, 0.0, 0.6 };
+			//GLfloat vPointColor[] = { 1.0, 1.0, 0.0, 0.6 };
+			GLfloat vPointColor[] = { 0.2, 0.0, 0.0, 0.9 };
 			gb_shaderManager.UseStockShader(GLT_SHADER_FLAT, gb_transformPipeline.GetModelViewProjectionMatrix(), vPointColor);
 			gb_treeskl.Display(NULL, NULL, 1);
 		}
@@ -368,6 +384,17 @@ void onDisplay(void)
 			glUseProgram(adsPhongShader);
 			glUniform3fv(locLight, 1, vEyeLight);
 			gb_treeskl.Display(SetGeneralColor, SetSelectedColor, 0);
+		}
+		if(gb_bVoxel)
+		{
+			GLfloat vEyeLight[] = { -100.0f, 100.0f, 150.0f };
+			glUseProgram(adsPhongShader);
+			glUniform3fv(locLight, 1, vEyeLight);
+			SetVoxelColor();
+			glPolygonMode(GL_FRONT, GL_LINE);
+			glLineWidth(2.0f);
+			gb_treeskl.DisplayVoxel(7);
+			glPolygonMode(GL_FRONT, GL_FILL);
 		}
 	}
 	//glUniformMatrix4fv(locMVP, 1, GL_FALSE, gb_transformPipeline.GetModelViewProjectionMatrix());
@@ -605,10 +632,26 @@ void onKeyboard(unsigned char key, int x, int y)
 		gb_bBothDirection = !gb_bBothDirection;
 		break;
 	case 'm':		// change display mode
-		gb_bPoints = !gb_bPoints;
-		char prompt[100];
-		gb_bPoints ? (strcpy(prompt, "change to point mode")) : (strcpy(prompt, "change to skeleton mode"));
-		printf("%s\n", prompt);
+		{
+			gb_bPoints = !gb_bPoints;
+			char prompt[100];
+			gb_bPoints ? (strcpy(prompt, "change to point mode")) : (strcpy(prompt, "change to skeleton mode"));
+			printf("%s\n", prompt);
+		}
+		break;
+	case 'v':
+		{
+			gb_bVoxel = !gb_bVoxel;
+			char prompt[100];
+			gb_bVoxel ? (strcpy(prompt, "display voxels")) : (strcpy(prompt, "undisplay voxels"));
+			printf("%s\n", prompt);
+		}
+		break;
+	case '1':
+		gb_treeskl.LinearRadius(gb_linear_ratio);
+		break;
+	case '2':
+		gb_treeskl.SquareRadius();
 		break;
 	case 'q':
 		exit(0);
@@ -655,6 +698,9 @@ void onSpecial(int key, int x, int y)
 	case GLUT_KEY_F3:
 	case GLUT_KEY_F4:
 	case GLUT_KEY_F5:
+	case GLUT_KEY_F6:
+	case GLUT_KEY_F7:
+	case GLUT_KEY_F8:
 		if(key - GLUT_KEY_F1 >= gb_sklCount)
 		{
 			printf("%s\n", "No skeleton file exist in ./skls/");

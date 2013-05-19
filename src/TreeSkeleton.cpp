@@ -8,9 +8,11 @@
 #include <GLTools.h>
 #include <GLMatrixStack.h>
 #include <GLGeometryTransform.h>
+#include <float.h>
 #include "TreeSkeleton.h"
 
 extern GLTriangleBatch gb_sphereBatch;
+extern GLBatch gb_cubeBatch;
 extern GLMatrixStack gb_modelViewMatrix;
 extern GLGeometryTransform gb_transformPipeline;
 extern GLint locMVP;
@@ -541,6 +543,120 @@ void CSkeletonNode::Select(M3DVector3f pt, CSkeletonNode **ppCurNode)
 			return;
 		}
 		pChild->Select(pt, ppCurNode);
+		pChild = pChild->m_pNext;
+	}
+}
+
+void CSkeletonNode::CheckRange(M3DVector3f maxRange, M3DVector3f minRange)
+{
+	for(int i = 0; i < 3; i++)
+	{
+		if(m_pos[i] + m_radius > maxRange[i])
+			maxRange[i] = m_pos[i] + m_radius;
+		if(m_pos[i] - m_radius < minRange[i])
+			minRange[i] = m_pos[i] - m_radius;
+	}
+	CSkeletonNode *pChild = m_pChild;
+	while(pChild)
+	{
+		pChild->CheckRange(maxRange, minRange);
+		pChild = pChild->m_pNext;
+	}
+}
+
+void CTreeSkeleton::DisplayVoxel(int nSlicesX)
+{
+	if(!m_pRoot)
+		return;
+	M3DVector3f maxRange = {-FLT_MAX, -FLT_MAX, -FLT_MAX},minRange = {FLT_MAX, FLT_MAX, FLT_MAX};
+	m_pRoot->CheckRange(maxRange, minRange);
+	float unitLength = (maxRange[0] - minRange[0]) / nSlicesX; 
+	int nums[3];
+	nums[0] = nSlicesX + 1;
+	nums[1] = ceil((maxRange[1] - minRange[1]) / unitLength);
+	nums[2] = ceil((maxRange[2] - minRange[2]) / unitLength);
+	gb_modelViewMatrix.PushMatrix();
+	for(int i = 0; i < nums[0]; i++)
+	{
+		for(int j = 0; j < nums[1]; j++)
+		{
+			for(int k = 0; k < nums[2]; k++)
+			{
+				gb_modelViewMatrix.PushMatrix();
+				gb_modelViewMatrix.Translate(minRange[0] + unitLength / 2 + unitLength * i, 
+											 minRange[1] + unitLength / 2 + unitLength * j, 
+											 minRange[2] + unitLength / 2 + unitLength * k);
+				gb_modelViewMatrix.Scale(unitLength, unitLength, unitLength);
+
+				glUniformMatrix4fv(locMVP, 1, GL_FALSE, gb_transformPipeline.GetModelViewProjectionMatrix());
+				glUniformMatrix4fv(locMV, 1, GL_FALSE, gb_transformPipeline.GetModelViewMatrix());
+				glUniformMatrix3fv(locNM, 1, GL_FALSE, gb_transformPipeline.GetNormalMatrix());
+				gb_cubeBatch.Draw();			
+				gb_modelViewMatrix.PopMatrix();
+			}
+		}
+	}
+	gb_modelViewMatrix.PopMatrix();
+}
+
+void CTreeSkeleton::LinearRadius(float ratio)
+{
+	if(m_pRoot == NULL)
+		return;
+	m_pRoot->LinearRadius(ratio);
+}
+
+void CTreeSkeleton::SquareRadius()
+{
+	if(m_pRoot == NULL)
+		return;
+	m_pRoot->SquareRadius();
+}
+
+void CSkeletonNode::LinearRadius(float ratio)
+{
+	CSkeletonNode *pChild = m_pChild;
+	int nChild = 0;
+	while(pChild)
+	{
+		nChild ++;
+		pChild = pChild->m_pNext;
+	}
+	if(nChild == 0)
+		return;
+	if(nChild > 1)
+	{
+		pChild = m_pChild;
+		while(pChild)
+		{
+			pChild->m_radius = m_radius * ratio;
+			pChild->LinearRadius(ratio);
+			pChild = pChild->m_pNext;
+		}
+	}
+	else
+	{
+		m_pChild->m_radius = m_radius;
+		m_pChild->LinearRadius(ratio);
+	}
+}
+
+void CSkeletonNode::SquareRadius()
+{
+	CSkeletonNode *pChild = m_pChild;
+	int nChild = 0;
+	while(pChild)
+	{
+		nChild ++;
+		pChild = pChild->m_pNext;
+	}
+	if(nChild == 0)
+		return;
+	pChild = m_pChild;
+	while(pChild)
+	{
+		pChild->m_radius = m_radius / sqrt((double)nChild);
+		pChild->SquareRadius();
 		pChild = pChild->m_pNext;
 	}
 }
