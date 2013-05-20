@@ -6,7 +6,7 @@
 
 # Creation Date : 10-05-2013
 
-# Last Modified : Fri 10 May 2013 09:55:38 PM CST
+# Last Modified : Mon 20 May 2013 09:09:07 PM CST
 
 # Created By : Philip Zhang 
 
@@ -46,4 +46,5 @@ run:
 	./$(MAIN)
 
 add:
-	git add src/* shared/* include/*
+	git add src/* shared/* include/* skls/* shaders/* textures/*
+	git add *
