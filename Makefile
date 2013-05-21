@@ -6,7 +6,7 @@
 
 # Creation Date : 10-05-2013
 
-# Last Modified : Mon 20 May 2013 09:09:07 PM CST
+# Last Modified : Tue 21 May 2013 02:40:34 PM CST
 
 # Created By : Philip Zhang 
 
@@ -26,6 +26,7 @@ prog: $(MAIN)
 
 Main.o : $(SRCPATH)Main.cpp
 TreeSkeleton.o : $(SRCPATH)TreeSkeleton.cpp
+TreePointCloud.o : $(SRCPATH)TreePointCloud.cpp
 GLUtils.o	: $(SHAREDPATH)GLUtils.cpp
 GLTools.o : $(SHAREDPATH)GLTools.cpp
 GLBatch.o : $(SHAREDPATH)GLBatch.cpp
@@ -33,8 +34,8 @@ GLTriangleBatch.o : $(SHAREDPATH)GLTriangleBatch.cpp
 GLShaderManager.o : $(SHAREDPATH)GLShaderManager.cpp
 math3d.o	: $(SHAREDPATH)math3d.cpp
 
-$(MAIN) : Main.o TreeSkeleton.o GLUtils.o
-	$(CC) $(CFLAGS) -o $(MAIN) $(LIBDIRS) $(SRCPATH)Main.cpp $(SRCPATH)TreeSkeleton.cpp $(SHAREDPATH)GLUtils.cpp $(SHAREDPATH)GLTools.cpp $(SHAREDPATH)GLBatch.cpp $(SHAREDPATH)GLTriangleBatch.cpp $(SHAREDPATH)GLShaderManager.cpp $(SHAREDPATH)math3d.cpp $(LIBS)
+$(MAIN) : Main.o TreeSkeleton.o TreePointCloud.o GLUtils.o
+	$(CC) $(CFLAGS) -o $(MAIN) $(LIBDIRS) $(SRCPATH)Main.cpp $(SRCPATH)TreeSkeleton.cpp $(SRCPATH)TreePointCloud.cpp $(SHAREDPATH)GLUtils.cpp $(SHAREDPATH)GLTools.cpp $(SHAREDPATH)GLBatch.cpp $(SHAREDPATH)GLTriangleBatch.cpp $(SHAREDPATH)GLShaderManager.cpp $(SHAREDPATH)math3d.cpp $(LIBS)
 
 clean:
 	rm -f *.o

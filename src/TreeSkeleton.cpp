@@ -10,6 +10,7 @@
 #include <GLGeometryTransform.h>
 #include <float.h>
 #include "TreeSkeleton.h"
+#include "TreePointCloud.h"
 
 extern GLTriangleBatch gb_sphereBatch;
 extern GLBatch gb_cubeBatch;
@@ -208,7 +209,7 @@ unsigned CSkeletonNode::WritePoint(FILE *fout)
 }
 
 CTreeSkeleton::CTreeSkeleton()
-	:m_pRoot(NULL), m_pCurNode(NULL), m_slices(20)
+	:m_pRoot(NULL), m_pCurNode(NULL), m_pPointCloud(NULL), m_slices(20)
 {
 }
 
@@ -659,4 +660,14 @@ void CSkeletonNode::SquareRadius()
 		pChild->SquareRadius();
 		pChild = pChild->m_pNext;
 	}
+}
+
+void CTreeSkeleton::LoadPointCloud(const char *filename)
+{
+	m_pCurNode = m_pRoot;
+	Delete(0);
+	if(m_pPointCloud == NULL)
+		m_pPointCloud = new CTreePointCloud();
+	m_pPointCloud->Load(filename);
+	m_pPointCloud->ExtractSkeleton(this);
 }

@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Sun 19 May 2013 09:06:47 PM CST
+ * Last Modified : Tue 21 May 2013 10:31:14 PM CST
 
  * Created By : Philip Zhang 
 
@@ -562,6 +562,9 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 	case 'l':	// select next brother
 		gb_treeskl.Next();
+		break;
+	case 'L':	// for point cloud test
+		gb_treeskl.LoadPointCloud("Tree.ply");
 		break;
 		// change the radius of current node
 	case 'i':

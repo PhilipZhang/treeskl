@@ -6,7 +6,7 @@
 
 * Creation Date : 06-05-2013
 
-* Last Modified : Sun 19 May 2013 09:01:52 PM CST
+* Last Modified : Tue 21 May 2013 10:30:55 PM CST
 
 * Created By : Philip Zhang 
 
@@ -14,6 +14,8 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 #ifndef _TREESKELETON_INCLUDE_
 #define _TREESKELETON_INCLUDE_
 #include <stdio.h>
+
+class CTreePointCloud;
 
 typedef void (*SetColor)(void);
 
@@ -55,6 +57,8 @@ public:
 class CTreeSkeleton
 {
 public:
+	friend class CTreePointCloud;
+
 	CTreeSkeleton();
 	~CTreeSkeleton();
 	void Insert(float x,
@@ -76,10 +80,12 @@ public:
 	void Save(const char *filename, unsigned mode);
 	void LinearRadius(float ratio);
 	void SquareRadius();
+	void LoadPointCloud(const char *filename);
 
 protected:
 	CSkeletonNode *m_pRoot;
 	CSkeletonNode *m_pCurNode;
+	CTreePointCloud *m_pPointCloud;
 	int m_slices;
 };
 
