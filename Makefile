@@ -6,7 +6,7 @@
 
 # Creation Date : 10-05-2013
 
-# Last Modified : Tue 21 May 2013 02:40:34 PM CST
+# Last Modified : Wed 22 May 2013 10:22:00 PM CST
 
 # Created By : Philip Zhang 
 
@@ -27,6 +27,7 @@ prog: $(MAIN)
 Main.o : $(SRCPATH)Main.cpp
 TreeSkeleton.o : $(SRCPATH)TreeSkeleton.cpp
 TreePointCloud.o : $(SRCPATH)TreePointCloud.cpp
+VoxelModel.o : $(SRCPATH)VoxelModel.cpp
 GLUtils.o	: $(SHAREDPATH)GLUtils.cpp
 GLTools.o : $(SHAREDPATH)GLTools.cpp
 GLBatch.o : $(SHAREDPATH)GLBatch.cpp
@@ -34,8 +35,8 @@ GLTriangleBatch.o : $(SHAREDPATH)GLTriangleBatch.cpp
 GLShaderManager.o : $(SHAREDPATH)GLShaderManager.cpp
 math3d.o	: $(SHAREDPATH)math3d.cpp
 
-$(MAIN) : Main.o TreeSkeleton.o TreePointCloud.o GLUtils.o
-	$(CC) $(CFLAGS) -o $(MAIN) $(LIBDIRS) $(SRCPATH)Main.cpp $(SRCPATH)TreeSkeleton.cpp $(SRCPATH)TreePointCloud.cpp $(SHAREDPATH)GLUtils.cpp $(SHAREDPATH)GLTools.cpp $(SHAREDPATH)GLBatch.cpp $(SHAREDPATH)GLTriangleBatch.cpp $(SHAREDPATH)GLShaderManager.cpp $(SHAREDPATH)math3d.cpp $(LIBS)
+$(MAIN) : Main.o TreeSkeleton.o TreePointCloud.o GLUtils.o VoxelModel.o
+	$(CC) $(CFLAGS) -o $(MAIN) $(LIBDIRS) $(SRCPATH)Main.cpp $(SRCPATH)TreeSkeleton.cpp $(SRCPATH)TreePointCloud.cpp $(SRCPATH)VoxelModel.cpp $(SHAREDPATH)GLUtils.cpp $(SHAREDPATH)GLTools.cpp $(SHAREDPATH)GLBatch.cpp $(SHAREDPATH)GLTriangleBatch.cpp $(SHAREDPATH)GLShaderManager.cpp $(SHAREDPATH)math3d.cpp $(LIBS)
 
 clean:
 	rm -f *.o

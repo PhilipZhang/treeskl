@@ -6,7 +6,7 @@
 
 * Creation Date : 06-05-2013
 
-* Last Modified : Tue 21 May 2013 10:30:55 PM CST
+* Last Modified : Wed 22 May 2013 10:53:11 PM CST
 
 * Created By : Philip Zhang 
 
@@ -16,6 +16,7 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 #include <stdio.h>
 
 class CTreePointCloud;
+class CVoxelModel;
 
 typedef void (*SetColor)(void);
 
@@ -57,7 +58,7 @@ public:
 class CTreeSkeleton
 {
 public:
-	friend class CTreePointCloud;
+	friend class CVoxelModel;
 
 	CTreeSkeleton();
 	~CTreeSkeleton();
@@ -71,7 +72,7 @@ public:
 	void Next();
 	void Previous();
 	void Display(SetColor General, SetColor Special, unsigned mode);
-	void DisplayVoxel(int nSlicesX);
+	void DisplayVoxel();
 	void MoveCurNode(float vector[3]);
 	void ChangeRadius(float increase);
 	void Simplify(double, bool bCurNode = true);
@@ -81,11 +82,13 @@ public:
 	void LinearRadius(float ratio);
 	void SquareRadius();
 	void LoadPointCloud(const char *filename);
+	void LoadVoxelModel(int nSlicesX);
 
 protected:
 	CSkeletonNode *m_pRoot;
 	CSkeletonNode *m_pCurNode;
 	CTreePointCloud *m_pPointCloud;
+	CVoxelModel *m_pVoxelModel;
 	int m_slices;
 };
 

@@ -11,6 +11,7 @@
 #include <float.h>
 #include "TreeSkeleton.h"
 #include "TreePointCloud.h"
+#include "VoxelModel.h"
 
 extern GLTriangleBatch gb_sphereBatch;
 extern GLBatch gb_cubeBatch;
@@ -209,7 +210,8 @@ unsigned CSkeletonNode::WritePoint(FILE *fout)
 }
 
 CTreeSkeleton::CTreeSkeleton()
-	:m_pRoot(NULL), m_pCurNode(NULL), m_pPointCloud(NULL), m_slices(20)
+	:m_pRoot(NULL), m_pCurNode(NULL), m_pPointCloud(new CTreePointCloud), 
+	m_pVoxelModel(new CVoxelModel), m_slices(20)
 {
 }
 
@@ -565,17 +567,18 @@ void CSkeletonNode::CheckRange(M3DVector3f maxRange, M3DVector3f minRange)
 	}
 }
 
-void CTreeSkeleton::DisplayVoxel(int nSlicesX)
+// display the current voxel model
+void CTreeSkeleton::DisplayVoxel()
 {
 	if(!m_pRoot)
 		return;
-	M3DVector3f maxRange = {-FLT_MAX, -FLT_MAX, -FLT_MAX},minRange = {FLT_MAX, FLT_MAX, FLT_MAX};
-	m_pRoot->CheckRange(maxRange, minRange);
-	float unitLength = (maxRange[0] - minRange[0]) / nSlicesX; 
+	float *maxRange = m_pPointCloud->m_vMaxRange;
+	float *minRange = m_pPointCloud->m_vMinRange;
 	int nums[3];
-	nums[0] = nSlicesX + 1;
-	nums[1] = ceil((maxRange[1] - minRange[1]) / unitLength);
-	nums[2] = ceil((maxRange[2] - minRange[2]) / unitLength);
+	nums[0] = m_pVoxelModel->m_iSlicesX;
+	nums[1] = m_pVoxelModel->m_iSlicesY;
+	nums[2] = m_pVoxelModel->m_iSlicesZ;
+	float unitLength = (maxRange[0] - minRange[0]) / nums[0];
 	gb_modelViewMatrix.PushMatrix();
 	for(int i = 0; i < nums[0]; i++)
 	{
@@ -583,6 +586,8 @@ void CTreeSkeleton::DisplayVoxel(int nSlicesX)
 		{
 			for(int k = 0; k < nums[2]; k++)
 			{
+				if(m_pVoxelModel->m_vvvVoxels[i][j][k].isEmpty)
+					continue;
 				gb_modelViewMatrix.PushMatrix();
 				gb_modelViewMatrix.Translate(minRange[0] + unitLength / 2 + unitLength * i, 
 											 minRange[1] + unitLength / 2 + unitLength * j, 
@@ -666,8 +671,11 @@ void CTreeSkeleton::LoadPointCloud(const char *filename)
 {
 	m_pCurNode = m_pRoot;
 	Delete(0);
-	if(m_pPointCloud == NULL)
-		m_pPointCloud = new CTreePointCloud();
 	m_pPointCloud->Load(filename);
-	m_pPointCloud->ExtractSkeleton(this);
+}
+
+void CTreeSkeleton::LoadVoxelModel(int nSlicesX)
+{
+	m_pVoxelModel->IndexPoints(m_pPointCloud, nSlicesX);
+	m_pVoxelModel->ExtractSkeleton(this);
 }

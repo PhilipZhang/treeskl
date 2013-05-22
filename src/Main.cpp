@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Wed 22 May 2013 08:59:13 PM CST
+ * Last Modified : Wed 22 May 2013 11:03:24 PM CST
 
  * Created By : Philip Zhang 
 
@@ -394,7 +394,7 @@ void onDisplay(void)
 			SetVoxelColor();
 			glPolygonMode(GL_FRONT, GL_LINE);
 			glLineWidth(2.0f);
-			gb_treeskl.DisplayVoxel(7);
+			gb_treeskl.DisplayVoxel();
 			glPolygonMode(GL_FRONT, GL_FILL);
 		}
 	}
@@ -582,6 +582,7 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 	case 'L':	// for point cloud test
 		gb_treeskl.LoadPointCloud("Tree.ply");
+		gb_treeskl.LoadVoxelModel(80);
 		break;
 		// change the radius of current node
 	case 'i':

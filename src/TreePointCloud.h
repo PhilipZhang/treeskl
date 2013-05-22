@@ -6,7 +6,7 @@
 
 * Creation Date : 21-05-2013
 
-* Last Modified : Wed 22 May 2013 09:18:33 PM CST
+* Last Modified : Wed 22 May 2013 10:59:42 PM CST
 
 * Created By : Philip Zhang 
 
@@ -16,9 +16,11 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 #define __TREEPOINTCLOUD_INCLUDE__
 #include <math3d.h>
 #include <vector>
+
 using namespace std;
 
 class CTreeSkeleton;
+class CVoxelModel;
 
 struct Float3f
 {
@@ -37,50 +39,34 @@ struct Float3f
 
 };
 
-struct Voxel
-{
-	Voxel();
-	vector<int> indices;
-	bool isUsed;
-	bool isEmpty;
-};
+float operator* (const Float3f& lhs, const Float3f& rhs);
 
-struct Index
-{
-	Index();
-	Index(int X, int Y, int Z);
-	int x, y, z;
-};
+Float3f operator* (const Float3f& lhs, float rhs);
+
+Float3f operator* (float lhs, const Float3f& rhs);
+
+Float3f operator- (const Float3f& lhs);
+
+Float3f operator+ (const Float3f& lhs, const Float3f& rhs);
+
+Float3f operator- (const Float3f& lhs, const Float3f& rhs);
+
+bool operator== (const Float3f &lhs, const Float3f &rhs);
 
 class CTreePointCloud
 {
+	friend class CVoxelModel;
+	friend class CTreeSkeleton;
 	// public methods
 	public:
 		CTreePointCloud();
 		void Load(const char *filename);
-		void ExtractSkeleton(CTreeSkeleton *tree);
 
-	// auxiliary functions and data members
 	protected:
-		// index points in voxels
-		void IndexPoints();
-		void GetNeighborPoints(const Index &ind, vector<Float3f>& ret);
-		void DividePoints(const vector<Float3f> &points, const Float3f &pt, vector<vector<Float3f> > & dirs_points);
-		void GetBranchDirections(const vector<vector<Float3f> > &dirs_points, float ratio, const Float3f &pt, vector<Float3f> &dirs);
-		void GetVoxelIndex(float *pt, Index &ind);
-		float CalculateLength(const vector<Float3f> &points, const Float3f &origin, const Float3f &dir);
-		float CalculateRadius(const vector<Float3f> &points, const Float3f &origin, const Float3f &dir);
 		// data members
 		M3DVector3f m_vMaxRange;
 		M3DVector3f m_vMinRange;
 		vector<Float3f> m_vPoints;
-		vector<vector<vector<Voxel> > > m_vvvVoxels;
-		int m_iSlicesX, m_iSlicesY, m_iSlicesZ;
-		int m_nSlicesX;
-		float m_fUnitLength;
-		float m_fThreshold;
-		float m_fBranchRatio;
-		int m_iMaxStep;
 };
 
 
