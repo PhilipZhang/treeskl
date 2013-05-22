@@ -6,7 +6,7 @@
 
 * Creation Date : 21-05-2013
 
-* Last Modified : Tue 21 May 2013 11:06:02 PM CST
+* Last Modified : Wed 22 May 2013 09:18:32 PM CST
 
 * Created By : Philip Zhang 
 
@@ -101,10 +101,10 @@ CTreePointCloud::CTreePointCloud()
 {
 	m_vMinRange[0] = m_vMinRange[1] = m_vMinRange[2] = FLT_MAX; 
 	m_vMinRange[0] = m_vMinRange[1] = m_vMinRange[2] = FLT_MIN; 
-	m_fThreshold = 1.5;
-	m_fBranchRatio = 1.0 / 18.0;
-	m_iMaxStep = 5;
-	m_nSlicesX = 25;
+	m_fThreshold = 0.8;
+	m_fBranchRatio = 1.0 / 13.0;
+	m_iMaxStep = 6;
+	m_nSlicesX = 18;
 }
 
 void CTreePointCloud::IndexPoints()

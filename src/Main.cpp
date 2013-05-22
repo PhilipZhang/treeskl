@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Tue 21 May 2013 10:31:14 PM CST
+ * Last Modified : Wed 22 May 2013 08:59:13 PM CST
 
  * Created By : Philip Zhang 
 
@@ -250,6 +250,7 @@ void SetSelectedColor()
 {
 	if(!gb_bTexture)
 	{
+		// brown
 		GLfloat vAmbientColor[] = { 0.2f, 0.0f, 0.0f, 0.9f };
 		GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.9f };
 		GLfloat vSpecularColor[] = { 0.1f, 0.0f, 0.0f, 0.9f };
@@ -501,6 +502,8 @@ void onMouseKey(int button, int state, int x, int y)
 		if(state == GLUT_UP) onMouseDrag(MOUSE_DRAG_MAX, MOUSE_DRAG_MAX);
 		break;
 	case GLUT_LEFT_BUTTON:
+		if(gb_bPoints)
+			return;
 		if(state == GLUT_DOWN) onMouseDrag(MOUSE_DRAG_MIN, MOUSE_DRAG_MIN);
 		if(state == GLUT_UP) onMouseDrag(MOUSE_DRAG_MAX, MOUSE_DRAG_MIN);
 		break;
@@ -516,6 +519,8 @@ void onMouseKey(int button, int state, int x, int y)
 		break;
 	case GLUT_MIDDLE_BUTTON:
 		{
+			if(gb_bPoints)
+				return;
 			GLFrame eyeFrame;
 			eyeFrame.MoveUp(gb_eye_height);
 			eyeFrame.RotateWorld(gb_eye_theta * 3.1415926 / 180.0, 1.0, 0.0, 0.0);
@@ -544,23 +549,35 @@ void onKeyboard(unsigned char key, int x, int y)
 		gb_eye_height -= 0.2;
 		break;
 	case 's':	// simply the model
+		if(gb_bPoints)
+			return;
 		gb_treeskl.Simplify(gb_max_angle * 3.1415926 / 180.0);
 		gb_max_angle += 5.0;
 		break;
 	case 'S':
+		if(gb_bPoints)
+			return;
 		gb_treeskl.Simplify(gb_max_angle * 3.1415926 / 180.0, false);
 		gb_max_angle += 5.0;
 		break;
 	case 'j':	// select the parent
+		if(gb_bPoints)
+			return;
 		gb_treeskl.Ascent();
 		break;
 	case 'k':	// select the first child
+		if(gb_bPoints)
+			return;
 		gb_treeskl.Descent();
 		break;
 	case 'h':	// select previous brother
+		if(gb_bPoints)
+			return;
 		gb_treeskl.Previous();
 		break;
 	case 'l':	// select next brother
+		if(gb_bPoints)
+			return;
 		gb_treeskl.Next();
 		break;
 	case 'L':	// for point cloud test
@@ -568,23 +585,33 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 		// change the radius of current node
 	case 'i':
+		if(gb_bPoints)
+			return;
 		gb_treeskl.ChangeRadius(0.0001);
 		printf("%s\n", "radius plus 0.0001");
 		break;
 	case 'I':
+		if(gb_bPoints)
+			return;
 		gb_treeskl.ChangeRadius(0.001);
 		printf("%s\n", "radius plus 0.001");
 		break;
 	case 'd':
+		if(gb_bPoints)
+			return;
 		gb_treeskl.ChangeRadius(-0.0001);
 		printf("%s\n", "radius minus 0.0001");
 		break;
 	case 'D':
+		if(gb_bPoints)
+			return;
 		gb_treeskl.ChangeRadius(-0.001);
 		printf("%s\n", "radius minus 0.001");
 		break;
 	case 'n':		// move the node nearer(in eye coordinate system)
 		{
+			if(gb_bPoints)
+				return;
 			vector[2] = 0.003;
 			MoveCurNode(vector);
 			printf("%s\n", "current node move 0.003 nearer to observer");
@@ -592,6 +619,8 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 	case 'f':		// move the node farther(in eye coordinate system)
 		{
+			if(gb_bPoints)
+				return;
 			vector[2] = -0.003;
 			MoveCurNode(vector);
 			printf("%s\n", "current node move 0.003 farther to observer");
@@ -599,6 +628,8 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 	case 'g':		// generate a new child
 		{
+			if(gb_bPoints)
+				return;
 			vector[0] = 1;
 			M3DVector3f wol;
 			GetWorldDirFromView(wol, vector);
@@ -606,18 +637,22 @@ void onKeyboard(unsigned char key, int x, int y)
 		}
 		break;
 	case 'p':		// pull out the current select subtree(exclude current node)
+		if(gb_bPoints)
+			return;
 		gb_treeskl.Delete(0);
 		break;
 	case 'P':		// pull out the current select subtree(include current node)
+		if(gb_bPoints)
+			return;
 		gb_treeskl.Delete(1);
 		break;
 	case 'w':		// save the skeleton to file
-		gb_treeskl.Save("result.skl", 0);
-		printf("Model saved to %s\n", "result.skl");
+		gb_treeskl.Save("Tree.skl", 0);
+		printf("Model saved to %s\n", "Tree.skl");
 		return;
 	case 'W':
-		gb_treeskl.Save("result.ply", 1);
-		printf("Model saved to %s\n", "result.ply");
+		gb_treeskl.Save("Tree.ply", 1);
+		printf("Model saved to %s\n", "Tree.ply");
 		return;
 	case 'b':		// reverse the background color
 		gb_bBlack = !gb_bBlack;
@@ -670,6 +705,8 @@ void onSpecial(int key, int x, int y)
 	{
 	case GLUT_KEY_LEFT:
 		{
+			if(gb_bPoints)
+				return;
 			vector[0] = -0.003;
 			MoveCurNode(vector);
 			printf("%s\n", "current node move 0.003 left to observer");
@@ -677,6 +714,8 @@ void onSpecial(int key, int x, int y)
 		break;
 	case GLUT_KEY_RIGHT:
 		{
+			if(gb_bPoints)
+				return;
 			vector[0] = 0.003;
 			MoveCurNode(vector);
 			printf("%s\n", "current node move 0.003 right to observer");
@@ -684,6 +723,8 @@ void onSpecial(int key, int x, int y)
 		break;
 	case GLUT_KEY_UP:
 		{
+			if(gb_bPoints)
+				return;
 			vector[1] = 0.003;
 			MoveCurNode(vector);
 			printf("%s\n", "current node move 0.003 up to observer");
@@ -691,6 +732,8 @@ void onSpecial(int key, int x, int y)
 		break;
 	case GLUT_KEY_DOWN:
 		{
+			if(gb_bPoints)
+				return;
 			vector[1] = -0.003;
 			MoveCurNode(vector);
 			printf("%s\n", "current node move 0.003 down to observer");
@@ -735,7 +778,7 @@ int main(int argc, char* argv[])
 
 	glewExperimental = GL_TRUE;
 	glewInit();
-	
+
 	SetupRC();    
 	glutMainLoop();
 	ShutdownRC();
