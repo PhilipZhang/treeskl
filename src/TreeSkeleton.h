@@ -6,7 +6,7 @@
 
 * Creation Date : 06-05-2013
 
-* Last Modified : Wed 22 May 2013 10:53:11 PM CST
+* Last Modified : Thu 23 May 2013 01:10:32 PM CST
 
 * Created By : Philip Zhang 
 
@@ -83,6 +83,7 @@ public:
 	void SquareRadius();
 	void LoadPointCloud(const char *filename);
 	void LoadVoxelModel(int nSlicesX);
+	void ExtractSkeleton(unsigned mode = 0);
 
 protected:
 	CSkeletonNode *m_pRoot;

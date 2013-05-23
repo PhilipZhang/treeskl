@@ -6,7 +6,7 @@
 
 * Creation Date : 22-05-2013
 
-* Last Modified : Wed 22 May 2013 10:40:05 PM CST
+* Last Modified : Thu 23 May 2013 04:40:57 PM CST
 
 * Created By : Philip Zhang 
 
@@ -33,9 +33,9 @@ Index::Index(int X, int Y, int Z) : x(X), y(Y), z(Z)
 
 CVoxelModel::CVoxelModel()
 {
-	m_fThreshold = 0.8;
+	m_fThreshold = 0.5;
 	m_fBranchRatio = 1.0 / 13.0;
-	m_iMaxStep = 6;
+	m_iMaxStep = 3;
 }
 
 void CVoxelModel::IndexPoints(CTreePointCloud *pPointCloud, int nSlicesX)
@@ -73,8 +73,10 @@ void CVoxelModel::IndexPoints(CTreePointCloud *pPointCloud, int nSlicesX)
 	}
 }
 
-// note the change of current node determines the extraction part.
-void CVoxelModel::ExtractSkeleton(CTreeSkeleton *tree)
+// note the change of current node in tree determines the extraction part.
+// mode 0 represents flood until leaf nodes...
+// mode 1 represents just parallel flood one step
+void CVoxelModel::ExtractSkeleton(CTreeSkeleton *tree, unsigned mode)
 {
 	CSkeletonNode *pCurNode = tree->m_pCurNode;
 	// handle root node
@@ -82,41 +84,70 @@ void CVoxelModel::ExtractSkeleton(CTreeSkeleton *tree)
 	{
 		return;
 	}
-	float *curPos = pCurNode->m_pos;
-	Index ind;
-	GetVoxelIndex(curPos, ind);
-	vector<Float3f> points;
-	GetNeighborPoints(ind, points);
-	if(points.size() == 0)
+	if(mode == 0)
+	{
 		return;
-	// just to make life easier...	
-	Float3f curPoint = Float3f(curPos[0], curPos[1], curPos[2]);
-	vector<vector<Float3f> > dirs_points;
-	dirs_points.resize(26);
-	DividePoints(points, curPoint, dirs_points);
-	vector<Float3f> dirs;
-	GetBranchDirections(dirs_points, m_fBranchRatio, curPoint, dirs);
-	for(int i = 0; i < dirs.size(); i++)
-	{
-		if(dirs[i] == Float3f(0.0, 0.0, 0.0))
-			continue;
-		float radius = CalculateRadius(dirs_points[i], curPoint, dirs[i]);
-		float length = CalculateLength(dirs_points[i], curPoint, dirs[i]);
-		Float3f dstPoint = curPoint + dirs[i] * length;
-		//float dest[3] = { dstPoint.x, dstPoint.y, dstPoint.z };
-		//Index index;
-		//GetVoxelIndex(dest, index);
-		//m_vvvVoxels[index.x][index.y][index.z].isUsed = false;
-		tree->Insert(dstPoint.x, dstPoint.y, dstPoint.z, radius);
-		tree->m_pCurNode = pCurNode;
 	}
-	CSkeletonNode *pChild = pCurNode->m_pChild;
-	while(pChild)
+	if(mode == 1)
 	{
-		// set current node and recursive call ExtractSkeleton()
-		tree->m_pCurNode = pChild;
-		ExtractSkeleton(tree);
-		pChild = pChild->m_pNext;
+		vector<vector<Float3f> > nodes_points;
+		vector<Index> nodes_index;
+		vector<Float3f> nodes_pdirs;		// direction from parent
+		int nodes_count = 0;
+		int bSecondTime = false;
+		while(pCurNode != tree->m_pCurNode || !bSecondTime)
+		{
+			if(pCurNode == tree->m_pCurNode)
+				bSecondTime = true;
+			float *curPos = pCurNode->m_pos;
+			Index ind;
+			GetVoxelIndex(curPos, ind);
+			nodes_index.push_back(ind);
+			if(!pCurNode->m_pParent)
+				nodes_pdirs.push_back(Float3f(0.0, 1.0, 0.0));
+			else
+			{
+				float *parPos = pCurNode->m_pParent->m_pos;
+				nodes_pdirs.push_back(Float3f(curPos[0] - parPos[0], 
+											  curPos[1] - parPos[1],
+											  curPos[2] - parPos[2]).identity());
+			}
+			tree->Next();
+			nodes_count ++;
+		}
+		nodes_points.resize(nodes_count);
+		GetNeighborPoints(nodes_index, nodes_pdirs, nodes_points);
+		pCurNode = tree->m_pCurNode;
+		for(int i = 0; i < nodes_count; i++)
+		{
+			if(nodes_points[i].size() == 0)
+				continue;
+			// just to make life easier...	
+			float *curPos = pCurNode->m_pos;
+			Float3f curPoint = Float3f(curPos[0], curPos[1], curPos[2]);
+			vector<vector<Float3f> > dirs_points;
+			dirs_points.resize(26);
+			DividePoints(nodes_points[i], curPoint, dirs_points);
+			vector<Float3f> dirs;
+			GetBranchDirections(dirs_points, m_fBranchRatio, curPoint, dirs);
+
+			for(int j = 0; j < dirs.size(); j++)
+			{
+				if(dirs[j] == Float3f(0.0, 0.0, 0.0))
+					continue;
+				float radius = CalculateRadius(dirs_points[j], curPoint, dirs[j]);
+				float length = CalculateLength(dirs_points[j], curPoint, dirs[j]);
+				Float3f dstPoint = curPoint + dirs[j] * length;
+				//float dest[3] = { dstPoint.x, dstPoint.y, dstPoint.z };
+				//Index index;
+				//GetVoxelIndex(dest, index);
+				//m_vvvVoxels[index.x][index.y][index.z].isUsed = false;
+				tree->Insert(dstPoint.x, dstPoint.y, dstPoint.z, radius);
+				tree->m_pCurNode = pCurNode;
+			}
+
+			tree->Next();
+		}
 	}
 }
 
@@ -130,68 +161,76 @@ void CVoxelModel::GetVoxelIndex(float *pt, Index &ind)
 }
 
 // the index of voxel is given, and return its nearby points
-void CVoxelModel::GetNeighborPoints(const Index &ind, vector<Float3f> &ret)
+void CVoxelModel::GetNeighborPoints(const vector<Index> &nodes_index, const vector<Float3f> &nodes_pdirs, vector<vector<Float3f> > &ret)
 {
-	int ix = ind.x, iy = ind.y, iz = ind.z;
-	if(ix < 0 || iy < 0 || iz < 0 || ix >= m_iSlicesX || iy >= m_iSlicesY || iz >= m_iSlicesZ)
-		return;
-	// first check whether used or empty
-	Voxel vol = m_vvvVoxels[ix][iy][iz];
-	if(vol.isUsed || vol.isEmpty)
-		return;
-	// then flood to its neighbors
-	// until it reaches the threshold
+	// 26 flooding directions
 	int dirs[26][3] = { {1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}, // first 6 basic directions
 						{1, 1, 1}, {0, 1, 1}, {-1, 1, 1}, {1, 0, 1}, {-1, 0, 1}, {1, -1, 1}, {0, -1, 1}, {-1, -1, 1}, // front directions
 						{1, 1, 0}, {1, -1, 0}, {-1, 1, 0}, {-1, -1, 0}, // middle directions
 						{1, 1, -1}, {0, 1, -1}, {-1, 1, -1}, {1, 0, -1}, {-1, 0, -1}, {1, -1, -1}, {0, -1, -1}, {-1, -1, -1} // back directions
 					  };
 
-	vector<Index> recent;
-	recent.push_back(ind);
-	float inc = FLT_MAX;
-	int step_count = 0;
-	int prev_count = 1;
-	while(inc >= m_fThreshold)
+	int nodes_count = nodes_index.size();
+	float *nodes_inc = new float[nodes_count];
+	int *nodes_prev_count = new int[nodes_count];
+	vector<vector<Index> > nodes_recent;
+	nodes_recent.resize(nodes_count);
+	for(int i = 0; i < nodes_count; i++)
 	{
-		vector<Index> tmp;
-		// process recent voxels
-		for(int i = 0; i < recent.size(); i++)
-		{
-			Index index(recent[i].x, recent[i].y, recent[i].z);
-			if(!m_vvvVoxels[index.x][index.y][index.z].isEmpty && !m_vvvVoxels[index.x][index.y][index.z].isUsed)
-			{
-				m_vvvVoxels[index.x][index.y][index.z].isUsed = true;
-				for(int j = 0; j < m_vvvVoxels[index.x][index.y][index.z].indices.size(); j++)
-				{
-					ret.push_back((*m_pvPoints)[m_vvvVoxels[index.x][index.y][index.z].indices[j]]);
-				}
-			}
-		}
-
-		// flood to new voxels
-		for(int i = 0; i < recent.size(); i++)
-		{
-			for(int j = 0; j < 26; j++)
-			{
-				Index index(recent[i].x + dirs[i][0], recent[i].y + dirs[i][1], recent[i].z + dirs[i][2]);
-				if(index.x < 0 || index.y < 0 || index.z < 0 || index.x >= m_iSlicesX || index.y >= m_iSlicesY || index.z >= m_iSlicesZ)
-					continue;
-				if(!m_vvvVoxels[index.x][index.y][index.z].isEmpty && !m_vvvVoxels[index.x][index.y][index.z].isUsed)
-				{
-					tmp.push_back(index);
-				}
-			}
-		}
-		recent.clear();
-		//copy(tmp.begin(), tmp.end(), recent.begin());
-		for(int i = 0; i < tmp.size(); i++)
-			recent.push_back(tmp[i]);
-		inc = float(recent.size()) / prev_count;
-		prev_count = recent.size();
-		if(++step_count > m_iMaxStep)
-			break;
+		nodes_inc[i] = FLT_MAX;
+		nodes_prev_count[i] = 1;
+		m_vvvVoxels[nodes_index[i].x][nodes_index[i].y][nodes_index[i].z].isUsed = true;
+		nodes_recent[i].push_back(nodes_index[i]);
 	}
+	for(int i = 0; i < m_iMaxStep; i++)
+	{
+		for(int j = 0; j < nodes_count; j++)
+		{
+			if(nodes_inc[j] < m_fThreshold)
+				continue;
+
+			vector<Index> tmp;
+			// process recent voxels
+			if(i != 0)
+			{
+				for(int k = 0; k < nodes_recent[j].size(); k++)
+				{
+					Index index(nodes_recent[j][k].x, nodes_recent[j][k].y, nodes_recent[j][k].z);
+					for(int t = 0; t < m_vvvVoxels[index.x][index.y][index.z].indices.size(); t++)
+					{
+						ret[j].push_back((*m_pvPoints)[m_vvvVoxels[index.x][index.y][index.z].indices[t]]);
+					}
+				}
+			}
+
+			// flood to new voxels
+			for(int k = 0; k < nodes_recent[j].size(); k++)
+			{
+				for(int t = 0; t < 26; t++)
+				{
+					if(nodes_pdirs[j] * Float3f(dirs[t][0], dirs[t][1], dirs[t][2]) <= 0)
+						continue;
+					Index index(nodes_recent[j][k].x + dirs[t][0], nodes_recent[j][k].y + dirs[t][1], nodes_recent[j][k].z + dirs[t][2]);
+					if(index.x < 0 || index.y < 0 || index.z < 0 || index.x >= m_iSlicesX || index.y >= m_iSlicesY || index.z >= m_iSlicesZ)
+						continue;
+					if(!m_vvvVoxels[index.x][index.y][index.z].isEmpty && !m_vvvVoxels[index.x][index.y][index.z].isUsed)
+					{
+						m_vvvVoxels[index.x][index.y][index.z].isUsed = true;
+						tmp.push_back(index);
+					}
+				}
+			}
+			nodes_recent[j].clear();
+			//copy(tmp.begin(), tmp.end(), nodes_recent.begin());
+			for(int k = 0; k < tmp.size(); k++)
+				nodes_recent[j].push_back(tmp[k]);
+			nodes_inc[j] = float(nodes_recent[j].size()) / nodes_prev_count[j];
+			nodes_prev_count[j] = nodes_recent[j].size();
+		}
+	}
+
+	delete nodes_prev_count;
+	delete nodes_inc;
 }
 
 void CVoxelModel::DividePoints(const vector<Float3f> &points, const Float3f &pt, vector<vector<Float3f> > & dirs_points)

@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Wed 22 May 2013 11:03:24 PM CST
+ * Last Modified : Thu 23 May 2013 02:17:50 PM CST
 
  * Created By : Philip Zhang 
 
@@ -52,6 +52,7 @@ bool				gb_bCoord = true;			// whether to draw the axis
 bool				gb_bBothDirection = true;	// whether the axis is both directional
 bool				gb_bPoints = false;			// whether render in point mode
 bool				gb_bVoxel = false;
+bool				gb_bOnlyVoxel = false;
 GLTriangleBatch     gb_sphereBatch;			// batch of sphere
 GLBatch				gb_cubeBatch;			// batch of voxel cube
 GLBatch				gb_axisBatches[6];		// batch of axis
@@ -172,7 +173,8 @@ void SetupRC(void)
 
 	// Make the sphere
 	gltMakeSphere(gb_sphereBatch, 1.0f, 52, 26);
-	gltMakeLineCube(gb_cubeBatch, 1.0f);
+	//gltMakeLineCube(gb_cubeBatch, 1.0f);
+	gltMakeCube(gb_cubeBatch, 1.0f);
 
 	// make axis
 	GLfloat vVerts[12][3] = { {0.0, 0.0, 0.0}, {100.0, 0.0, 0.0},
@@ -265,6 +267,16 @@ void SetVoxelColor()
 	GLfloat vAmbientColor[] = { 0.5f, 0.5f, 0.0f, 0.1f };
 	GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.1f };
 	GLfloat vSpecularColor[] = { 0.3f, 0.3f, 0.0f, 0.1f };
+	glUniform4fv(locAmbient, 1, vAmbientColor);
+	glUniform4fv(locDiffuse, 1, vDiffuseColor);
+	glUniform4fv(locSpecular, 1, vSpecularColor);
+}
+
+void SetUsedVoxelColor()
+{
+	GLfloat vAmbientColor[] = { 0.5f, 0.0f, 0.2f, 0.2f };
+	GLfloat vDiffuseColor[] = { 0.3f, 0.0f, 0.1f, 0.2f };
+	GLfloat vSpecularColor[] = { 0.3f, 0.2f, 0.2f, 0.2f };
 	glUniform4fv(locAmbient, 1, vAmbientColor);
 	glUniform4fv(locDiffuse, 1, vDiffuseColor);
 	glUniform4fv(locSpecular, 1, vSpecularColor);
@@ -372,19 +384,22 @@ void onDisplay(void)
 	}
 	else
 	{
-		if(gb_bPoints)
+		if(!gb_bOnlyVoxel)
 		{
-			//GLfloat vPointColor[] = { 1.0, 1.0, 0.0, 0.6 };
-			GLfloat vPointColor[] = { 0.2, 0.0, 0.0, 0.9 };
-			gb_shaderManager.UseStockShader(GLT_SHADER_FLAT, gb_transformPipeline.GetModelViewProjectionMatrix(), vPointColor);
-			gb_treeskl.Display(NULL, NULL, 1);
-		}
-		else
-		{
-			GLfloat vEyeLight[] = { -100.0f, 100.0f, 150.0f };
-			glUseProgram(adsPhongShader);
-			glUniform3fv(locLight, 1, vEyeLight);
-			gb_treeskl.Display(SetGeneralColor, SetSelectedColor, 0);
+			if(gb_bPoints)
+			{
+				//GLfloat vPointColor[] = { 1.0, 1.0, 0.0, 0.6 };
+				GLfloat vPointColor[] = { 0.2, 0.0, 0.0, 0.9 };
+				gb_shaderManager.UseStockShader(GLT_SHADER_FLAT, gb_transformPipeline.GetModelViewProjectionMatrix(), vPointColor);
+				gb_treeskl.Display(NULL, NULL, 1);
+			}
+			else
+			{
+				GLfloat vEyeLight[] = { -100.0f, 100.0f, 150.0f };
+				glUseProgram(adsPhongShader);
+				glUniform3fv(locLight, 1, vEyeLight);
+				gb_treeskl.Display(SetGeneralColor, SetSelectedColor, 0);
+			}
 		}
 		if(gb_bVoxel)
 		{
@@ -582,7 +597,13 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 	case 'L':	// for point cloud test
 		gb_treeskl.LoadPointCloud("Tree.ply");
-		gb_treeskl.LoadVoxelModel(80);
+		gb_treeskl.LoadVoxelModel(20);
+		break;
+	case 'e':	// extract skeleton of current node
+		gb_treeskl.ExtractSkeleton(1);
+		break;
+	case 'E':	// extract the whole skeleton
+		gb_treeskl.ExtractSkeleton(0);
 		break;
 		// change the radius of current node
 	case 'i':
@@ -684,6 +705,11 @@ void onKeyboard(unsigned char key, int x, int y)
 			char prompt[100];
 			gb_bVoxel ? (strcpy(prompt, "display voxels")) : (strcpy(prompt, "undisplay voxels"));
 			printf("%s\n", prompt);
+		}
+		break;
+	case 'V':
+		{
+			gb_bOnlyVoxel = !gb_bOnlyVoxel;
 		}
 		break;
 	case '1':

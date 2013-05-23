@@ -21,6 +21,9 @@ extern GLint locMVP;
 extern GLint locMV;
 extern GLint locNM;
 
+void SetVoxelColor();
+void SetUsedVoxelColor();
+
 CSkeletonNode::CSkeletonNode(float x, float y, float z, float radius)
 	:m_pParent(NULL), m_pPrev(NULL), m_pNext(NULL), m_pChild(NULL), m_radius(radius), t_no(0)
 {
@@ -588,6 +591,11 @@ void CTreeSkeleton::DisplayVoxel()
 			{
 				if(m_pVoxelModel->m_vvvVoxels[i][j][k].isEmpty)
 					continue;
+				if(m_pVoxelModel->m_vvvVoxels[i][j][k].isUsed)
+				{
+					SetUsedVoxelColor();
+					glPolygonMode(GL_FRONT, GL_FILL);
+				}
 				gb_modelViewMatrix.PushMatrix();
 				gb_modelViewMatrix.Translate(minRange[0] + unitLength / 2 + unitLength * i, 
 											 minRange[1] + unitLength / 2 + unitLength * j, 
@@ -599,6 +607,11 @@ void CTreeSkeleton::DisplayVoxel()
 				glUniformMatrix3fv(locNM, 1, GL_FALSE, gb_transformPipeline.GetNormalMatrix());
 				gb_cubeBatch.Draw();			
 				gb_modelViewMatrix.PopMatrix();
+				if(m_pVoxelModel->m_vvvVoxels[i][j][k].isUsed)
+				{
+					SetVoxelColor();
+					glPolygonMode(GL_FRONT, GL_LINE);
+				}
 			}
 		}
 	}
@@ -669,13 +682,18 @@ void CSkeletonNode::SquareRadius()
 
 void CTreeSkeleton::LoadPointCloud(const char *filename)
 {
-	m_pCurNode = m_pRoot;
-	Delete(0);
+	//m_pCurNode = m_pRoot;
+	//Delete(0);
 	m_pPointCloud->Load(filename);
 }
 
 void CTreeSkeleton::LoadVoxelModel(int nSlicesX)
 {
 	m_pVoxelModel->IndexPoints(m_pPointCloud, nSlicesX);
-	m_pVoxelModel->ExtractSkeleton(this);
+	//m_pVoxelModel->ExtractSkeleton(this);
+}
+
+void CTreeSkeleton::ExtractSkeleton(unsigned mode)
+{
+	m_pVoxelModel->ExtractSkeleton(this, mode);
 }

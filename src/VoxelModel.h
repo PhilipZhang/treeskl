@@ -6,7 +6,7 @@
 
 * Creation Date : 22-05-2013
 
-* Last Modified : Wed 22 May 2013 10:59:58 PM CST
+* Last Modified : Thu 23 May 2013 03:47:58 PM CST
 
 * Created By : Philip Zhang 
 
@@ -42,11 +42,11 @@ class CVoxelModel
 	friend class CTreeSkeleton;
 public:
 	CVoxelModel();
-	void ExtractSkeleton(CTreeSkeleton *tree);
+	void ExtractSkeleton(CTreeSkeleton *tree, unsigned mode);
 	void IndexPoints(CTreePointCloud *pPointCloud, int nSlicesX);	// build a new indices.
 	//vector<vector<vector<Voxel> > > *GetVoxelModel() const;
 protected:
-	void GetNeighborPoints(const Index &ind, vector<Float3f>& ret);
+	void GetNeighborPoints(const vector<Index> &ind, const vector<Float3f> &nodes_pdirs, vector<vector<Float3f> >& ret);
 	void DividePoints(const vector<Float3f> &points, const Float3f &pt, vector<vector<Float3f> > & dirs_points);
 	void GetBranchDirections(const vector<vector<Float3f> > &dirs_points, float ratio, const Float3f &pt, vector<Float3f> &dirs);
 	void GetVoxelIndex(float *pt, Index &ind);
