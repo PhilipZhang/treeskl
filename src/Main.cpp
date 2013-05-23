@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Thu 23 May 2013 02:17:50 PM CST
+ * Last Modified : Thu 23 May 2013 10:00:00 PM CST
 
  * Created By : Philip Zhang 
 
@@ -253,9 +253,9 @@ void SetSelectedColor()
 	if(!gb_bTexture)
 	{
 		// brown
-		GLfloat vAmbientColor[] = { 0.2f, 0.0f, 0.0f, 0.9f };
-		GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.9f };
-		GLfloat vSpecularColor[] = { 0.1f, 0.0f, 0.0f, 0.9f };
+		GLfloat vAmbientColor[] = { 0.2f, 0.3f, 0.8f, 0.5f };
+		GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.5f };
+		GLfloat vSpecularColor[] = { 0.1f, 0.0f, 0.0f, 0.5f };
 		glUniform4fv(locAmbient, 1, vAmbientColor);
 		glUniform4fv(locDiffuse, 1, vDiffuseColor);
 		glUniform4fv(locSpecular, 1, vSpecularColor);
@@ -264,9 +264,9 @@ void SetSelectedColor()
 
 void SetVoxelColor()
 {
-	GLfloat vAmbientColor[] = { 0.5f, 0.5f, 0.0f, 0.1f };
-	GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.1f };
-	GLfloat vSpecularColor[] = { 0.3f, 0.3f, 0.0f, 0.1f };
+	GLfloat vAmbientColor[] = { 0.1f, 0.3f, 0.8f, 0.2f };
+	GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.2f };
+	GLfloat vSpecularColor[] = { 0.2f, 0.2f, 0.0f, 0.2f };
 	glUniform4fv(locAmbient, 1, vAmbientColor);
 	glUniform4fv(locDiffuse, 1, vDiffuseColor);
 	glUniform4fv(locSpecular, 1, vSpecularColor);
@@ -274,9 +274,9 @@ void SetVoxelColor()
 
 void SetUsedVoxelColor()
 {
-	GLfloat vAmbientColor[] = { 0.5f, 0.0f, 0.2f, 0.2f };
-	GLfloat vDiffuseColor[] = { 0.3f, 0.0f, 0.1f, 0.2f };
-	GLfloat vSpecularColor[] = { 0.3f, 0.2f, 0.2f, 0.2f };
+	GLfloat vAmbientColor[] = { 0.5f, 0.0f, 0.2f, 0.3f };
+	GLfloat vDiffuseColor[] = { 0.3f, 0.0f, 0.1f, 0.3f };
+	GLfloat vSpecularColor[] = { 0.3f, 0.2f, 0.2f, 0.3f };
 	glUniform4fv(locAmbient, 1, vAmbientColor);
 	glUniform4fv(locDiffuse, 1, vDiffuseColor);
 	glUniform4fv(locSpecular, 1, vSpecularColor);
@@ -408,7 +408,7 @@ void onDisplay(void)
 			glUniform3fv(locLight, 1, vEyeLight);
 			SetVoxelColor();
 			glPolygonMode(GL_FRONT, GL_LINE);
-			glLineWidth(2.0f);
+			glLineWidth(1.0f);
 			gb_treeskl.DisplayVoxel();
 			glPolygonMode(GL_FRONT, GL_FILL);
 		}
@@ -597,7 +597,7 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 	case 'L':	// for point cloud test
 		gb_treeskl.LoadPointCloud("Tree.ply");
-		gb_treeskl.LoadVoxelModel(20);
+		gb_treeskl.LoadVoxelModel(60);
 		break;
 	case 'e':	// extract skeleton of current node
 		gb_treeskl.ExtractSkeleton(1);

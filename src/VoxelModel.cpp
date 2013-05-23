@@ -6,7 +6,7 @@
 
 * Creation Date : 22-05-2013
 
-* Last Modified : Thu 23 May 2013 04:40:57 PM CST
+* Last Modified : Thu 23 May 2013 05:28:59 PM CST
 
 * Created By : Philip Zhang 
 
@@ -34,7 +34,7 @@ Index::Index(int X, int Y, int Z) : x(X), y(Y), z(Z)
 CVoxelModel::CVoxelModel()
 {
 	m_fThreshold = 0.5;
-	m_fBranchRatio = 1.0 / 13.0;
+	m_fBranchRatio = 1.0 / 10.0;
 	m_iMaxStep = 3;
 }
 
@@ -94,12 +94,10 @@ void CVoxelModel::ExtractSkeleton(CTreeSkeleton *tree, unsigned mode)
 		vector<Index> nodes_index;
 		vector<Float3f> nodes_pdirs;		// direction from parent
 		int nodes_count = 0;
-		int bSecondTime = false;
-		while(pCurNode != tree->m_pCurNode || !bSecondTime)
+		CSkeletonNode *pBrother = (pCurNode->m_pParent == NULL) ? pCurNode : pCurNode->m_pParent->m_pChild;
+		while(pBrother)
 		{
-			if(pCurNode == tree->m_pCurNode)
-				bSecondTime = true;
-			float *curPos = pCurNode->m_pos;
+			float *curPos = pBrother->m_pos;
 			Index ind;
 			GetVoxelIndex(curPos, ind);
 			nodes_index.push_back(ind);
@@ -112,18 +110,18 @@ void CVoxelModel::ExtractSkeleton(CTreeSkeleton *tree, unsigned mode)
 											  curPos[1] - parPos[1],
 											  curPos[2] - parPos[2]).identity());
 			}
-			tree->Next();
+			pBrother = pBrother->m_pNext;
 			nodes_count ++;
 		}
 		nodes_points.resize(nodes_count);
 		GetNeighborPoints(nodes_index, nodes_pdirs, nodes_points);
-		pCurNode = tree->m_pCurNode;
+		pBrother = (pCurNode->m_pParent == NULL) ? pCurNode : pCurNode->m_pParent->m_pChild;
 		for(int i = 0; i < nodes_count; i++)
 		{
 			if(nodes_points[i].size() == 0)
 				continue;
 			// just to make life easier...	
-			float *curPos = pCurNode->m_pos;
+			float *curPos = pBrother->m_pos;
 			Float3f curPoint = Float3f(curPos[0], curPos[1], curPos[2]);
 			vector<vector<Float3f> > dirs_points;
 			dirs_points.resize(26);
@@ -143,11 +141,12 @@ void CVoxelModel::ExtractSkeleton(CTreeSkeleton *tree, unsigned mode)
 				//GetVoxelIndex(dest, index);
 				//m_vvvVoxels[index.x][index.y][index.z].isUsed = false;
 				tree->Insert(dstPoint.x, dstPoint.y, dstPoint.z, radius);
-				tree->m_pCurNode = pCurNode;
+				tree->m_pCurNode = pBrother;
 			}
 
-			tree->Next();
+			pBrother = pBrother->m_pNext;
 		}
+		tree->m_pCurNode = pCurNode;
 	}
 }
 
@@ -208,7 +207,7 @@ void CVoxelModel::GetNeighborPoints(const vector<Index> &nodes_index, const vect
 			{
 				for(int t = 0; t < 26; t++)
 				{
-					if(nodes_pdirs[j] * Float3f(dirs[t][0], dirs[t][1], dirs[t][2]) <= 0)
+					if(nodes_pdirs[j] * Float3f(dirs[t][0], dirs[t][1], dirs[t][2]) <= 0.5)
 						continue;
 					Index index(nodes_recent[j][k].x + dirs[t][0], nodes_recent[j][k].y + dirs[t][1], nodes_recent[j][k].z + dirs[t][2]);
 					if(index.x < 0 || index.y < 0 || index.z < 0 || index.x >= m_iSlicesX || index.y >= m_iSlicesY || index.z >= m_iSlicesZ)

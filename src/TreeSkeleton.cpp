@@ -375,12 +375,20 @@ void CTreeSkeleton::Display(SetColor General, SetColor Special, unsigned mode)
 
 void CTreeSkeleton::MoveCurNode(float vector[3])
 {
-	if(m_pCurNode)
+	if(m_pCurNode == NULL)
+		return;
+	CSkeletonNode *pCurNode = m_pCurNode;
+	m_pCurNode->m_pos[0] += vector[0];
+	m_pCurNode->m_pos[1] += vector[1];
+	m_pCurNode->m_pos[2] += vector[2];
+	CSkeletonNode *pChild = m_pCurNode->m_pChild;
+	while(pChild)
 	{
-		m_pCurNode->m_pos[0] += vector[0];
-		m_pCurNode->m_pos[1] += vector[1];
-		m_pCurNode->m_pos[2] += vector[2];
+		m_pCurNode = pChild;
+		MoveCurNode(vector);
+		pChild = pChild->m_pNext;
 	}
+	m_pCurNode = pCurNode;
 }
 
 void CTreeSkeleton::ChangeRadius(float increase)
