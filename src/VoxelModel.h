@@ -6,7 +6,7 @@
 
 * Creation Date : 22-05-2013
 
-* Last Modified : Thu 23 May 2013 03:47:58 PM CST
+* Last Modified : Fri 24 May 2013 07:04:59 PM CST
 
 * Created By : Philip Zhang 
 
@@ -43,12 +43,13 @@ class CVoxelModel
 public:
 	CVoxelModel();
 	void ExtractSkeleton(CTreeSkeleton *tree, unsigned mode);
-	void IndexPoints(CTreePointCloud *pPointCloud, int nSlicesX);	// build a new indices.
+	void IndexPoints(CTreePointCloud *pPointCloud);	// build a new indices.
 	//vector<vector<vector<Voxel> > > *GetVoxelModel() const;
 protected:
 	void GetNeighborPoints(const vector<Index> &ind, const vector<Float3f> &nodes_pdirs, vector<vector<Float3f> >& ret);
 	void DividePoints(const vector<Float3f> &points, const Float3f &pt, vector<vector<Float3f> > & dirs_points);
 	void GetBranchDirections(const vector<vector<Float3f> > &dirs_points, float ratio, const Float3f &pt, vector<Float3f> &dirs);
+	void FindNearestPoint(const Float3f &dstPoint, const vector<Float3f> &points, Float3f &out);
 	void GetVoxelIndex(float *pt, Index &ind);
 	float CalculateLength(const vector<Float3f> &points, const Float3f &origin, const Float3f &dir);
 	float CalculateRadius(const vector<Float3f> &points, const Float3f &origin, const Float3f &dir);
@@ -60,6 +61,7 @@ protected:
 	float m_fUnitLength;
 	float m_fThreshold;
 	float m_fBranchRatio;
+	float m_fAngleCos;
 	int m_iMaxStep;
 };
 

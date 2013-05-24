@@ -468,71 +468,129 @@ void CTreeSkeleton::Load(const char *filename)
 
 // execute simplification on the current node
 // and all its sub nodes
-void CTreeSkeleton::Simplify(double max_angle, bool bCurNode)
+void CTreeSkeleton::Simplify(double max_angle, unsigned mode)
 {
 	assert(max_angle > 0.0);
 	// if it's null or an end node, return.
 	if(!m_pCurNode)
 		return;
-	if(!m_pRoot)
-		return;
-	if(bCurNode == true)
+	CSkeletonNode *pCurNode = m_pCurNode;
+	// vertical merge
+	if(mode == 0)
 	{
 		CSkeletonNode *pChild = m_pCurNode->m_pChild;
 		while(pChild)
 		{
-			pChild->Simplify(max_angle);
+			pChild->Simplify(max_angle, mode, this);
 			pChild = pChild->m_pNext;
 		}
 	}
-	else
+	if(mode == 1)
 	{
-		m_pRoot->Simplify(max_angle);
-		m_pCurNode = m_pRoot;
+		m_pCurNode->Simplify(max_angle, mode, this);
 	}
+	m_pCurNode = pCurNode;
 }
 
-void CSkeletonNode::Simplify(double max_angle)
+void CSkeletonNode::Simplify(double max_param, unsigned mode, CTreeSkeleton *tree)
 {
-	if(!m_pChild)
-		return;
-	if(m_pParent && m_pChild->m_pNext == NULL && m_pChild->m_pPrev == NULL)
+	if(mode == 0)
 	{
-		double u[3] = {m_pos[0] - m_pParent->m_pos[0],
-			m_pos[1] - m_pParent->m_pos[1],
-			m_pos[2] - m_pParent->m_pos[2]};
-		double v[3] = {m_pChild->m_pos[0] - m_pos[0],
-			m_pChild->m_pos[1] - m_pos[1],
-			m_pChild->m_pos[2] - m_pos[2]};
-		double angle = u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
-		angle /= sqrt(u[0] * u[0] + u[1] * u[1] + u[2] * u[2])
-			* sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-		angle = acos(angle);
-		if(angle < max_angle)
+		if(!m_pChild)
+			return;
+		if(m_pParent && m_pChild->m_pNext == NULL && m_pChild->m_pPrev == NULL)
 		{
-			// do simplification things
-			m_pChild->m_pParent = m_pParent;
-			if(m_pPrev == NULL)
+			double u[3] = {m_pos[0] - m_pParent->m_pos[0],
+				m_pos[1] - m_pParent->m_pos[1],
+				m_pos[2] - m_pParent->m_pos[2]};
+			double v[3] = {m_pChild->m_pos[0] - m_pos[0],
+				m_pChild->m_pos[1] - m_pos[1],
+				m_pChild->m_pos[2] - m_pos[2]};
+			double angle = u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+			angle /= sqrt(u[0] * u[0] + u[1] * u[1] + u[2] * u[2])
+				* sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+			angle = acos(angle);
+			if(angle < max_param)
 			{
-				m_pParent->m_pChild = m_pChild;
-				m_pChild->m_pPrev = NULL;
+				// do simplification things
+				m_pChild->m_pParent = m_pParent;
+				if(m_pPrev == NULL)
+				{
+					m_pParent->m_pChild = m_pChild;
+					m_pChild->m_pPrev = NULL;
+				}
+				else
+				{
+					m_pPrev->m_pNext = m_pChild;
+					m_pChild->m_pPrev = m_pPrev;
+				}
+				m_pChild->m_pNext = m_pNext;
+				if(m_pNext)
+					m_pNext->m_pPrev = m_pChild;
 			}
-			else
-			{
-				m_pPrev->m_pNext = m_pChild;
-				m_pChild->m_pPrev = m_pPrev;
-			}
-			m_pChild->m_pNext = m_pNext;
-			if(m_pNext)
-				m_pNext->m_pPrev = m_pChild;
+		}
+		CSkeletonNode *pChild = m_pChild;
+		while(pChild)
+		{
+			CSkeletonNode *tmp = pChild->m_pNext;
+			pChild->Simplify(max_param, 0, tree);
+			pChild = tmp;
 		}
 	}
-	CSkeletonNode *pChild = m_pChild;
-	while(pChild)
+
+	if(mode == 1)
 	{
-		CSkeletonNode *tmp = pChild->m_pNext;
-		pChild->Simplify(max_angle);
-		pChild = tmp;
+		if(!m_pChild)
+			return;
+		bool fAllLeaves = true;
+		CSkeletonNode *pChild = m_pChild;
+		// check whether all its child nodes are leaf nodes
+		while(pChild)
+		{
+			if(pChild->m_pChild)
+				fAllLeaves = false;
+			pChild = pChild->m_pNext;
+		}
+		// if all are leaf nodes, conduct merge operation
+		if(fAllLeaves)
+		{
+			CSkeletonNode *pPrev = m_pChild, *pNext = m_pChild->m_pNext;
+			while(pPrev && pNext && pPrev != pNext)
+			{
+				Float3f posPrev(pPrev->m_pos[0], pPrev->m_pos[1], pPrev->m_pos[2]);
+				Float3f posNext(pNext->m_pos[0], pNext->m_pos[1], pNext->m_pos[2]);
+				float dist = (posPrev - posNext).length();
+				if(dist < max_param)
+				{		
+					Float3f posNew = 0.5 * (posPrev + posNext);
+					float radius = (pPrev->m_radius + pNext->m_radius) / 2;
+					tree->m_pCurNode = pPrev;
+					tree->Delete(1);
+					tree->m_pCurNode = pNext;
+					tree->Delete(1);
+					tree->Insert(posNew.x, posNew.y, posNew.z, radius);
+					this->Simplify(max_param, mode, tree);
+					break;
+				}
+				else
+				{
+					if(pNext->m_pNext == NULL)
+						pPrev = pPrev->m_pNext;
+					else
+						pNext = pNext->m_pNext;
+				}
+			}
+		}
+		// else recursive call itself to reach leaf nodes
+		else
+		{
+			pChild = m_pChild;
+			while(pChild)
+			{
+				pChild->Simplify(max_param, mode, tree);
+				pChild = pChild->m_pNext;
+			}
+		}
 	}
 }
 
@@ -695,9 +753,9 @@ void CTreeSkeleton::LoadPointCloud(const char *filename)
 	m_pPointCloud->Load(filename);
 }
 
-void CTreeSkeleton::LoadVoxelModel(int nSlicesX)
+void CTreeSkeleton::LoadVoxelModel()
 {
-	m_pVoxelModel->IndexPoints(m_pPointCloud, nSlicesX);
+	m_pVoxelModel->IndexPoints(m_pPointCloud);
 	//m_pVoxelModel->ExtractSkeleton(this);
 }
 

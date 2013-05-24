@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Thu 23 May 2013 10:00:00 PM CST
+ * Last Modified : Fri 24 May 2013 07:01:18 PM CST
 
  * Created By : Philip Zhang 
 
@@ -41,6 +41,7 @@ GLGeometryTransform gb_transformPipeline;		// transform pipeline object
 GLShaderManager     gb_shaderManager;			// shader manager
 CTreeSkeleton		gb_treeskl;					// the tree skeleton model
 float				gb_max_angle = 5.0;			// max angle to simplify the model
+float				gb_max_dist = 0.05;
 float				gb_eye_radius = 5.0;		// the distance to view the model
 float				gb_eye_theta = 0.0;			// theta angle of eye
 float				gb_eye_phi = 0.0;			// phi angle of eye
@@ -566,14 +567,14 @@ void onKeyboard(unsigned char key, int x, int y)
 	case 's':	// simply the model
 		if(gb_bPoints)
 			return;
-		gb_treeskl.Simplify(gb_max_angle * 3.1415926 / 180.0);
-		gb_max_angle += 5.0;
+		gb_treeskl.Simplify(gb_max_angle * 3.1415926 / 180.0, 0);
+		gb_max_angle *= 2;
 		break;
 	case 'S':
 		if(gb_bPoints)
 			return;
-		gb_treeskl.Simplify(gb_max_angle * 3.1415926 / 180.0, false);
-		gb_max_angle += 5.0;
+		gb_treeskl.Simplify(gb_max_dist, 1);
+		gb_max_dist *= 2;
 		break;
 	case 'j':	// select the parent
 		if(gb_bPoints)
@@ -597,7 +598,7 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 	case 'L':	// for point cloud test
 		gb_treeskl.LoadPointCloud("Tree.ply");
-		gb_treeskl.LoadVoxelModel(60);
+		gb_treeskl.LoadVoxelModel();
 		break;
 	case 'e':	// extract skeleton of current node
 		gb_treeskl.ExtractSkeleton(1);

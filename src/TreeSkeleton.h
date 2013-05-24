@@ -6,7 +6,7 @@
 
 * Creation Date : 06-05-2013
 
-* Last Modified : Thu 23 May 2013 01:10:32 PM CST
+* Last Modified : Fri 24 May 2013 07:03:08 PM CST
 
 * Created By : Philip Zhang 
 
@@ -17,11 +17,13 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 
 class CTreePointCloud;
 class CVoxelModel;
+class CTreeSkeleton;
 
 typedef void (*SetColor)(void);
 
 class CSkeletonNode
 {
+	friend class CTreeSkeleton;
 public:
 	CSkeletonNode(float x,
 				  float y,
@@ -38,7 +40,7 @@ public:
 	void DisplayPoint();
 	void Write(FILE *file, int no);
 	unsigned WritePoint(FILE *fout);
-	void Simplify(double);
+	void Simplify(double, unsigned, CTreeSkeleton *);
 	void Select(M3DVector3f pt, CSkeletonNode **pCurNode);
 	void CheckRange(M3DVector3f maxRange, M3DVector3f minRange);
 	void LinearRadius(float ratio);
@@ -58,6 +60,7 @@ public:
 class CTreeSkeleton
 {
 public:
+	friend class CSkeletonNode;
 	friend class CVoxelModel;
 
 	CTreeSkeleton();
@@ -75,14 +78,14 @@ public:
 	void DisplayVoxel();
 	void MoveCurNode(float vector[3]);
 	void ChangeRadius(float increase);
-	void Simplify(double, bool bCurNode = true);
+	void Simplify(double, unsigned mode);
 	void Select(M3DVector3f pt);
 	void Load(const char *filename);
 	void Save(const char *filename, unsigned mode);
 	void LinearRadius(float ratio);
 	void SquareRadius();
 	void LoadPointCloud(const char *filename);
-	void LoadVoxelModel(int nSlicesX);
+	void LoadVoxelModel();
 	void ExtractSkeleton(unsigned mode = 0);
 
 protected:
