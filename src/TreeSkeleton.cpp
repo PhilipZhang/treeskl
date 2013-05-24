@@ -116,7 +116,14 @@ void CSkeletonNode::DisplayMesh(CSkeletonNode *pCurNode, int slices, SetColor Ge
 		General();
 }
 
-void CSkeletonNode::DisplayPoint()
+void CTreeSkeleton::SkeletonToPoint()
+{
+	m_pPointCloud->m_vPoints.clear();
+	if(m_pRoot)
+		m_pRoot->SkeletonToPoint(m_pPointCloud->m_vPoints);
+}
+
+void CSkeletonNode::SkeletonToPoint(vector<Float3f> &vPoints)
 {
 	CSkeletonNode *pChild = m_pChild;
 	while(pChild)
@@ -134,9 +141,6 @@ void CSkeletonNode::DisplayPoint()
 		M3DVector3f pt, pOut;
 		int num = (int)(m_radius * pChild->m_radius * height * 1e7);
 		if(num < 10) num = 10;
-		GLBatch pointBatch;
-		//M3DVector3f *verts = new M3DVector3f[num];
-		pointBatch.Begin(GL_POINTS, num);
 		for(int i = 0; i < num; i++)
 		{
 			float angle = random() / float(RAND_MAX) * M3D_2PI;
@@ -146,14 +150,9 @@ void CSkeletonNode::DisplayPoint()
 			pt[0] = radius * ratio * cos(angle);
 			pt[1] = radius * ratio * sin(angle);
 			m3dTransformVector3(pOut, pt, prod);
-			//memcpy(verts[i], pOut, sizeof(float) * 3);
-			//pointBatch.CopyVertexData3f(verts);
-			pointBatch.Vertex3fv(pOut);
+			vPoints.push_back(Float3f(pOut[0], pOut[1], pOut[2]));
 		}
-		//delete verts;
-		pointBatch.End();
-		pointBatch.Draw();
-		pChild->DisplayPoint();
+		pChild->SkeletonToPoint(vPoints);
 
 		pChild = pChild->m_pNext;
 	}
@@ -364,10 +363,17 @@ void CTreeSkeleton::Display(SetColor General, SetColor Special, unsigned mode)
 		}
 		break;
 	case 1:		// for point view
-		if(m_pRoot)
 		{
-			srandom(0);
-			m_pRoot->DisplayPoint();
+			GLBatch pointBatch;
+			pointBatch.Begin(GL_POINTS, m_pPointCloud->m_vPoints.size());
+			for(int i = 0; i < m_pPointCloud->m_vPoints.size(); i++)
+			{
+				Float3f pt = m_pPointCloud->m_vPoints[i];
+				float point[3] = { pt.x, pt.y, pt.z };
+				pointBatch.Vertex3fv(point);
+			}
+			pointBatch.End();
+			pointBatch.Draw();
 		}
 		break;
 	}
@@ -639,8 +645,6 @@ void CSkeletonNode::CheckRange(M3DVector3f maxRange, M3DVector3f minRange)
 // display the current voxel model
 void CTreeSkeleton::DisplayVoxel()
 {
-	if(!m_pRoot)
-		return;
 	float *maxRange = m_pPointCloud->m_vMaxRange;
 	float *minRange = m_pPointCloud->m_vMinRange;
 	int nums[3];
@@ -756,7 +760,6 @@ void CTreeSkeleton::LoadPointCloud(const char *filename)
 void CTreeSkeleton::LoadVoxelModel()
 {
 	m_pVoxelModel->IndexPoints(m_pPointCloud);
-	//m_pVoxelModel->ExtractSkeleton(this);
 }
 
 void CTreeSkeleton::ExtractSkeleton(unsigned mode)

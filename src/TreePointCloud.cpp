@@ -6,7 +6,7 @@
 
 * Creation Date : 21-05-2013
 
-* Last Modified : Wed 22 May 2013 10:36:29 PM CST
+* Last Modified : Fri 24 May 2013 08:34:16 PM CST
 
 * Created By : Philip Zhang 
 
@@ -107,6 +107,13 @@ void CTreePointCloud::Load(const char *filename)
 				m_vMinRange[i] = coor[i];
 			if(coor[i] > m_vMaxRange[i])
 				m_vMaxRange[i] = coor[i];
+			if(i == 1)
+			{
+				if(coor[i] < m_vMinRange[i])
+				{
+					m_root = Float3f(coor[0], coor[1], coor[2]);
+				}
+			}
 		}
 		m_vPoints.push_back(Float3f(coor[0], coor[1], coor[2]));
 	}

@@ -6,7 +6,7 @@
 
 * Creation Date : 22-05-2013
 
-* Last Modified : Fri 24 May 2013 07:04:59 PM CST
+* Last Modified : Fri 24 May 2013 08:30:25 PM CST
 
 * Created By : Philip Zhang 
 
@@ -50,6 +50,7 @@ protected:
 	void DividePoints(const vector<Float3f> &points, const Float3f &pt, vector<vector<Float3f> > & dirs_points);
 	void GetBranchDirections(const vector<vector<Float3f> > &dirs_points, float ratio, const Float3f &pt, vector<Float3f> &dirs);
 	void FindNearestPoint(const Float3f &dstPoint, const vector<Float3f> &points, Float3f &out);
+	float GetRootRadius();
 	void GetVoxelIndex(float *pt, Index &ind);
 	float CalculateLength(const vector<Float3f> &points, const Float3f &origin, const Float3f &dir);
 	float CalculateRadius(const vector<Float3f> &points, const Float3f &origin, const Float3f &dir);

@@ -6,7 +6,7 @@
 
 * Creation Date : 22-05-2013
 
-* Last Modified : Fri 24 May 2013 07:12:41 PM CST
+* Last Modified : Fri 24 May 2013 08:39:10 PM CST
 
 * Created By : Philip Zhang 
 
@@ -82,8 +82,10 @@ void CVoxelModel::ExtractSkeleton(CTreeSkeleton *tree, unsigned mode)
 {
 	CSkeletonNode *pCurNode = tree->m_pCurNode;
 	// handle root node
+	// only expand in x-z plane to get the initial radius
 	if(pCurNode == NULL)
 	{
+		GetRootRadius();
 		return;
 	}
 	vector<CSkeletonNode *> vec_pChild;	// hold all first child nodes in the same level
@@ -470,5 +472,18 @@ void CVoxelModel::FindNearestPoint(const Float3f &dstPoint, const vector<Float3f
 			minDist = (points[i] - dstPoint).length();
 			out = points[i]; 
 		}
+	}
+}
+
+float CVoxelMode::GetRootRadius()
+{
+	float radius;
+	Float3f root = m_pPointCloud->m_root;
+	float pt[3] = { root.x, root.y, root.z };
+	Index index;
+	GetVoxelIndex(pt, index);
+	while(!m_vvvVoxels[index.x][index.y][index.z].isEmpty)
+	{
+			
 	}
 }

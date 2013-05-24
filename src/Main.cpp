@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Fri 24 May 2013 07:01:18 PM CST
+ * Last Modified : Fri 24 May 2013 08:25:52 PM CST
 
  * Created By : Philip Zhang 
 
@@ -33,7 +33,8 @@
 #define MOUSE_DRAG_MAX 0x7FFFFFFF
 #define MOUSE_DRAG_MIN 0xFFFFFFFF
 
-const int gb_max_skl_count = 8;
+const int gb_max_skl_count = 9;
+const int gb_max_cloud_count = 9;
 GLFrustum           gb_viewFrustum;				// view frustum
 GLMatrixStack       gb_modelViewMatrix;			// modelview matrix stack
 GLMatrixStack       gb_projectionMatrix;		// projection matrix stack
@@ -51,14 +52,17 @@ bool				gb_bTexture = false;		// whether render with texture
 bool				gb_bBlack = true;			// background is black or white
 bool				gb_bCoord = true;			// whether to draw the axis
 bool				gb_bBothDirection = true;	// whether the axis is both directional
-bool				gb_bPoints = false;			// whether render in point mode
+bool				gb_bPoints = false;			// whether display point cloud
+bool				gb_bSkeleton = false;		// whether display skeleton
 bool				gb_bVoxel = false;
 bool				gb_bOnlyVoxel = false;
 GLTriangleBatch     gb_sphereBatch;			// batch of sphere
 GLBatch				gb_cubeBatch;			// batch of voxel cube
 GLBatch				gb_axisBatches[6];		// batch of axis
 char				gb_sklList[gb_max_skl_count][256];		// names of skeleton files
+char				gb_cloudList[gb_max_cloud_count][256];	// names of point cloud files
 int					gb_sklCount = 0;
+int					gb_cloudCount = 0;
 int					gb_winWidth, gb_winHeight;
 
 GLuint	normalMapShader;	// The textured diffuse light shader
@@ -129,6 +133,26 @@ void FillSklList()
 	}
 }
 
+void FillCloudList()
+{
+	DIR *d;
+	struct dirent *dir;
+	d = opendir("./clouds");
+	if(d)
+	{
+		while((dir = readdir(d)) != NULL)
+		{
+			if(strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0)
+			   continue;
+			strcpy(gb_cloudList[gb_cloudCount], "./clouds/");
+			strcat(gb_cloudList[gb_cloudCount], dir->d_name);
+			gb_cloudCount++;
+			if(gb_cloudCount == gb_max_cloud_count)
+				return;
+		}
+	}
+}
+
 void SortSklList()
 {
 	for(int i = 0; i < gb_sklCount - 1; i++)
@@ -150,6 +174,28 @@ void SortSklList()
 		printf("%s\n", gb_sklList[i]);
 }
 
+void SortCloudList()
+{
+	for(int i = 0; i < gb_cloudCount - 1; i++)
+	{
+		for(int j = i + 1; j < gb_cloudCount; j++)
+		{
+			if(strcmp(gb_cloudList[j - 1], gb_cloudList[j]) > 0)
+			{
+				// swap the two strings
+				char tmp[256];
+				strcpy(tmp, gb_cloudList[j - 1]);
+				strcpy(gb_cloudList[j - 1], gb_cloudList[j]);
+				strcpy(gb_cloudList[j], tmp);
+			}
+		}
+	}
+	printf("%s\n", "skeletons in path ./clouds/ are listed below:");
+	for(int i = 0; i < gb_cloudCount; i++)
+		printf("%s\n", gb_cloudList[i]);
+}
+
+
 // This function does any needed initialization on the rendering
 // context. 
 void SetupRC(void)
@@ -167,11 +213,14 @@ void SetupRC(void)
 	// find skeleton files in ./skls/ and fill their names into gb_sklList
 	FillSklList();
 	SortSklList();
-	if(gb_sklCount > 0)
-		gb_treeskl.Load(gb_sklList[0]);
+	FillCloudList();
+	SortCloudList();
+	/*
+	if(gb_cloudCount > 0)
+		gb_treeskl.LoadPointCloud(gb_cloudList[0]);
 	else
 		exit(0);
-
+	*/
 	// Make the sphere
 	gltMakeSphere(gb_sphereBatch, 1.0f, 52, 26);
 	//gltMakeLineCube(gb_cubeBatch, 1.0f);
@@ -394,7 +443,7 @@ void onDisplay(void)
 				gb_shaderManager.UseStockShader(GLT_SHADER_FLAT, gb_transformPipeline.GetModelViewProjectionMatrix(), vPointColor);
 				gb_treeskl.Display(NULL, NULL, 1);
 			}
-			else
+			if(gb_bSkeleton)
 			{
 				GLfloat vEyeLight[] = { -100.0f, 100.0f, 150.0f };
 				glUseProgram(adsPhongShader);
@@ -597,14 +646,16 @@ void onKeyboard(unsigned char key, int x, int y)
 		gb_treeskl.Next();
 		break;
 	case 'L':	// for point cloud test
-		gb_treeskl.LoadPointCloud("Tree.ply");
 		gb_treeskl.LoadVoxelModel();
+		printf("%s\n", "Index points into voxel model.");
 		break;
-	case 'e':	// extract skeleton of current node
+	case 'e':	// extract skeleton one level deeper from current level
 		gb_treeskl.ExtractSkeleton(1);
+		printf("%s\n", "Extract skeleton on current level.");
 		break;
-	case 'E':	// extract the whole skeleton
+	case 'E':	// extract skeleton from current level to leaf level
 		gb_treeskl.ExtractSkeleton(0);
+		printf("%s\n", "Extract skeleton until leaf level.");
 		break;
 		// change the radius of current node
 	case 'i':
@@ -692,11 +743,19 @@ void onKeyboard(unsigned char key, int x, int y)
 	case 'X':
 		gb_bBothDirection = !gb_bBothDirection;
 		break;
-	case 'm':		// change display mode
+	case 'm':		// display/undisplay points
 		{
 			gb_bPoints = !gb_bPoints;
 			char prompt[100];
-			gb_bPoints ? (strcpy(prompt, "change to point mode")) : (strcpy(prompt, "change to skeleton mode"));
+			gb_bPoints ? (strcpy(prompt, "display points")) : (strcpy(prompt, "undisplay points"));
+			printf("%s\n", prompt);
+		}
+		break;
+	case 'M':		// display/undisplay skeleton
+		{
+			gb_bSkeleton = !gb_bSkeleton;
+			char prompt[100];
+			gb_bSkeleton ? (strcpy(prompt, "display skeleton")) : (strcpy(prompt, "undisplay skeleton"));
 			printf("%s\n", prompt);
 		}
 		break;
@@ -713,11 +772,30 @@ void onKeyboard(unsigned char key, int x, int y)
 			gb_bOnlyVoxel = !gb_bOnlyVoxel;
 		}
 		break;
-	case '1':
+	case 'r':
 		gb_treeskl.LinearRadius(gb_linear_ratio);
 		break;
-	case '2':
+	case 'R':
 		gb_treeskl.SquareRadius();
+		break;
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+		{
+			if(key - '1' >= gb_cloudCount)
+			{
+				printf("%s\n", "No cloud file exist in ./clouds/");
+				return;
+			}
+			printf("Load point cloud %s\n", gb_cloudList[key - '1']);
+			gb_treeskl.LoadPointCloud(gb_cloudList[key - '1']);
+		}
 		break;
 	case 'q':
 		exit(0);
@@ -775,6 +853,7 @@ void onSpecial(int key, int x, int y)
 	case GLUT_KEY_F6:
 	case GLUT_KEY_F7:
 	case GLUT_KEY_F8:
+	case GLUT_KEY_F9:
 		if(key - GLUT_KEY_F1 >= gb_sklCount)
 		{
 			printf("%s\n", "No skeleton file exist in ./skls/");

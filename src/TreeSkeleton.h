@@ -6,7 +6,7 @@
 
 * Creation Date : 06-05-2013
 
-* Last Modified : Fri 24 May 2013 07:03:08 PM CST
+* Last Modified : Fri 24 May 2013 08:15:21 PM CST
 
 * Created By : Philip Zhang 
 
@@ -14,10 +14,13 @@ _._._._._._._._._._._._._._._._._._._._._.*/
 #ifndef _TREESKELETON_INCLUDE_
 #define _TREESKELETON_INCLUDE_
 #include <stdio.h>
+#include <vector>
+using namespace std;
 
 class CTreePointCloud;
 class CVoxelModel;
 class CTreeSkeleton;
+class Float3f;
 
 typedef void (*SetColor)(void);
 
@@ -37,7 +40,7 @@ public:
 					 );
 	// for gui display
 	void DisplayMesh(CSkeletonNode *pCurNode, int slices, SetColor General, SetColor Special);
-	void DisplayPoint();
+	void SkeletonToPoint(vector<Float3f> &);
 	void Write(FILE *file, int no);
 	unsigned WritePoint(FILE *fout);
 	void Simplify(double, unsigned, CTreeSkeleton *);
@@ -87,6 +90,7 @@ public:
 	void LoadPointCloud(const char *filename);
 	void LoadVoxelModel();
 	void ExtractSkeleton(unsigned mode = 0);
+	void SkeletonToPoint();
 
 protected:
 	CSkeletonNode *m_pRoot;
