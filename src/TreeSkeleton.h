@@ -6,7 +6,7 @@
 
 * Creation Date : 06-05-2013
 
-* Last Modified : Fri 24 May 2013 08:15:21 PM CST
+* Last Modified : Fri 24 May 2013 09:59:12 PM CST
 
 * Created By : Philip Zhang 
 
@@ -88,7 +88,7 @@ public:
 	void LinearRadius(float ratio);
 	void SquareRadius();
 	void LoadPointCloud(const char *filename);
-	void LoadVoxelModel();
+	void LoadVoxelModel(int sampleId);
 	void ExtractSkeleton(unsigned mode = 0);
 	void SkeletonToPoint();
 

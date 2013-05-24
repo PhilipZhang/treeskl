@@ -6,7 +6,7 @@
 
 * Creation Date : 22-05-2013
 
-* Last Modified : Fri 24 May 2013 08:39:10 PM CST
+* Last Modified : Fri 24 May 2013 10:04:55 PM CST
 
 * Created By : Philip Zhang 
 
@@ -34,16 +34,29 @@ Index::Index(int X, int Y, int Z) : x(X), y(Y), z(Z)
 
 CVoxelModel::CVoxelModel()
 {
-	// for skl 4
-	m_fThreshold = 0.5;
-	m_fBranchRatio = 1.0 / 13.0;
-	m_iMaxStep = 4;
-	m_fAngleCos = 0.5;
-	m_iSlicesX = 50;
 }
 
-void CVoxelModel::IndexPoints(CTreePointCloud *pPointCloud)
+void CVoxelModel::IndexPoints(CTreePointCloud *pPointCloud, int sampleId)
 {
+	// change parameters according to sampleId
+	switch(sampleId)
+	{
+	case 0:
+		m_fThreshold = 0.5;
+		m_fBranchRatio = 1.0 / 13.0;
+		m_iMaxStep = 4;
+		m_fAngleCos = 0.5;
+		m_iSlicesX = 50;
+		break;
+	case 1:
+		m_fThreshold = 0.5;
+		m_fBranchRatio = 1.0 / 13.0;
+		m_iMaxStep = 4;
+		m_fAngleCos = 0.5;
+		m_iSlicesX = 80;
+		break;
+	}
+
 	m_pPointCloud = pPointCloud;
 	m_pvPoints = &(pPointCloud->m_vPoints);
 	float *pMinRange = pPointCloud->m_vMinRange;
@@ -73,21 +86,25 @@ void CVoxelModel::IndexPoints(CTreePointCloud *pPointCloud)
 		m_vvvVoxels[x][y][z].indices.push_back(i);
 		m_vvvVoxels[x][y][z].isEmpty = false;
 	}
-}
+
+	}
 
 // note the change of current node in tree determines the extraction part.
 // mode 0 represents flood from current level until leaf level...
 // mode 1 represents just parallel flood one level
 void CVoxelModel::ExtractSkeleton(CTreeSkeleton *tree, unsigned mode)
 {
-	CSkeletonNode *pCurNode = tree->m_pCurNode;
 	// handle root node
 	// only expand in x-z plane to get the initial radius
-	if(pCurNode == NULL)
+	if(tree->m_pCurNode== NULL)
 	{
-		GetRootRadius();
-		return;
+		Float3f root;
+		float radius = GetRootRadius(root);
+		tree->Insert(root.x, root.y, root.z, radius);
+		if(mode == 1)
+			return;
 	}
+	CSkeletonNode *pCurNode = tree->m_pCurNode;
 	vector<CSkeletonNode *> vec_pChild;	// hold all first child nodes in the same level
 	// fisrt find all first child nodes on the same level as the current node
 	CSkeletonNode *pCurChild = (pCurNode->m_pParent) ? pCurNode->m_pParent->m_pChild : pCurNode;
@@ -475,15 +492,34 @@ void CVoxelModel::FindNearestPoint(const Float3f &dstPoint, const vector<Float3f
 	}
 }
 
-float CVoxelMode::GetRootRadius()
+float CVoxelModel::GetRootRadius(Float3f &root)
 {
-	float radius;
-	Float3f root = m_pPointCloud->m_root;
-	float pt[3] = { root.x, root.y, root.z };
-	Index index;
-	GetVoxelIndex(pt, index);
-	while(!m_vvvVoxels[index.x][index.y][index.z].isEmpty)
-	{
-			
-	}
+	float minX = FLT_MAX, minZ = FLT_MAX, maxX = FLT_MIN, maxZ = FLT_MIN;
+	float avgX = 0.0, avgZ = 0.0;
+	float radius = 0.0;
+	int count = 0;
+	for(int i = 0; i < m_iSlicesX; i++)
+		for(int j = 0; j < m_iSlicesZ; j++)
+		{
+			count += m_vvvVoxels[i][0][j].indices.size();
+			for(int k = 0; k < m_vvvVoxels[i][0][j].indices.size(); k++)
+			{
+				int ind = m_vvvVoxels[i][0][j].indices[k];
+				Float3f pt = m_pPointCloud->m_vPoints[ind];
+				avgX += pt.x;
+				avgZ += pt.z;
+				if(pt.x < minX)
+					minX = pt.x;
+				if(pt.z < minZ)
+					minZ = pt.z;
+				if(pt.x > maxX)
+					maxX = pt.x;
+				if(pt.z > maxZ)
+					maxZ = pt.z;
+			}
+		}
+	root.x = avgX / count;
+	root.y = m_pPointCloud->m_vMinRange[1];
+	root.z = avgZ / count;
+	return min(maxX - minX, maxZ - minZ) / 2;
 }

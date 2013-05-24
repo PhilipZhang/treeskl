@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Fri 24 May 2013 08:25:52 PM CST
+ * Last Modified : Fri 24 May 2013 10:02:11 PM CST
 
  * Created By : Philip Zhang 
 
@@ -64,6 +64,7 @@ char				gb_cloudList[gb_max_cloud_count][256];	// names of point cloud files
 int					gb_sklCount = 0;
 int					gb_cloudCount = 0;
 int					gb_winWidth, gb_winHeight;
+int					gb_sampleId = 0;
 
 GLuint	normalMapShader;	// The textured diffuse light shader
 GLuint  adsPhongShader;		// The ADSPhong shader
@@ -646,7 +647,7 @@ void onKeyboard(unsigned char key, int x, int y)
 		gb_treeskl.Next();
 		break;
 	case 'L':	// for point cloud test
-		gb_treeskl.LoadVoxelModel();
+		gb_treeskl.LoadVoxelModel(gb_sampleId);
 		printf("%s\n", "Index points into voxel model.");
 		break;
 	case 'e':	// extract skeleton one level deeper from current level
@@ -795,6 +796,7 @@ void onKeyboard(unsigned char key, int x, int y)
 			}
 			printf("Load point cloud %s\n", gb_cloudList[key - '1']);
 			gb_treeskl.LoadPointCloud(gb_cloudList[key - '1']);
+			gb_sampleId = key - '1';
 		}
 		break;
 	case 'q':

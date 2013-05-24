@@ -6,7 +6,7 @@
 
 * Creation Date : 21-05-2013
 
-* Last Modified : Fri 24 May 2013 08:32:16 PM CST
+* Last Modified : Fri 24 May 2013 09:36:27 PM CST
 
 * Created By : Philip Zhang 
 
@@ -66,7 +66,6 @@ class CTreePointCloud
 		// data members
 		M3DVector3f m_vMaxRange;
 		M3DVector3f m_vMinRange;
-		Float3f m_root;
 		vector<Float3f> m_vPoints;
 };
 

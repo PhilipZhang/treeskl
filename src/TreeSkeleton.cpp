@@ -757,9 +757,9 @@ void CTreeSkeleton::LoadPointCloud(const char *filename)
 	m_pPointCloud->Load(filename);
 }
 
-void CTreeSkeleton::LoadVoxelModel()
+void CTreeSkeleton::LoadVoxelModel(int sampleId)
 {
-	m_pVoxelModel->IndexPoints(m_pPointCloud);
+	m_pVoxelModel->IndexPoints(m_pPointCloud, sampleId);
 }
 
 void CTreeSkeleton::ExtractSkeleton(unsigned mode)
