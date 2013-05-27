@@ -6,7 +6,7 @@
 
 * Creation Date : 22-05-2013
 
-* Last Modified : Fri 24 May 2013 10:04:55 PM CST
+* Last Modified : Mon 27 May 2013 07:27:17 PM CST
 
 * Created By : Philip Zhang 
 
@@ -53,6 +53,20 @@ void CVoxelModel::IndexPoints(CTreePointCloud *pPointCloud, int sampleId)
 		m_fBranchRatio = 1.0 / 13.0;
 		m_iMaxStep = 4;
 		m_fAngleCos = 0.5;
+		m_iSlicesX = 80;
+		break;
+	case 2:
+		m_fThreshold = 0.5;
+		m_fBranchRatio = 1.0 / 10.0;
+		m_iMaxStep = 6;
+		m_fAngleCos = 0.5;
+		m_iSlicesX = 80;
+		break;
+	case 3:
+		m_fThreshold = 0.4;
+		m_fBranchRatio = 1.0 / 14.0;
+		m_iMaxStep = 4;
+		m_fAngleCos = 0.0;
 		m_iSlicesX = 80;
 		break;
 	}
@@ -523,3 +537,17 @@ float CVoxelModel::GetRootRadius(Float3f &root)
 	root.z = avgZ / count;
 	return min(maxX - minX, maxZ - minZ) / 2;
 }
+
+/*
+void CVoxelModel::FloodToNode(CSkeletonNode *pNode)
+{
+	CSkeletonNode *pParent = pNode->m_pParent;
+	// we usually do not lead the root node
+	if(!pParent)
+		return;
+	// for all voxels whose distance to the line(pNode--pParent)
+	// are less than pNode->m_radius, we mark the voxel as used as
+	// if it has been flooded by the flooding algorithm. 
+	// This can be a manual helper to our automatic algorithm.
+}
+*/

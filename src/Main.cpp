@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Fri 24 May 2013 10:02:11 PM CST
+ * Last Modified : Mon 27 May 2013 08:40:37 PM CST
 
  * Created By : Philip Zhang 
 
@@ -38,6 +38,8 @@ const int gb_max_cloud_count = 9;
 GLFrustum           gb_viewFrustum;				// view frustum
 GLMatrixStack       gb_modelViewMatrix;			// modelview matrix stack
 GLMatrixStack       gb_projectionMatrix;		// projection matrix stack
+M3DMatrix44f		gb_hit_modelview;
+M3DMatrix44f		gb_hit_projection;
 GLGeometryTransform gb_transformPipeline;		// transform pipeline object
 GLShaderManager     gb_shaderManager;			// shader manager
 CTreeSkeleton		gb_treeskl;					// the tree skeleton model
@@ -49,7 +51,7 @@ float				gb_eye_phi = 0.0;			// phi angle of eye
 float				gb_eye_height = 0.0;		// height of eye
 float				gb_linear_ratio = 0.6;
 bool				gb_bTexture = false;		// whether render with texture
-bool				gb_bBlack = true;			// background is black or white
+bool				gb_bBlack = false;			// background is black or white
 bool				gb_bCoord = true;			// whether to draw the axis
 bool				gb_bBothDirection = true;	// whether the axis is both directional
 bool				gb_bPoints = false;			// whether display point cloud
@@ -202,9 +204,15 @@ void SortCloudList()
 void SetupRC(void)
 {
 	// Background
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f );
-
+	if(gb_bBlack)
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	else
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	
 	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_ALWAYS);
+	glDepthRange(0.0f, 1.0f);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_NORMALIZE);
 	glEnable(GL_BLEND);
@@ -290,9 +298,9 @@ void SetGeneralColor()
 {
 	if(!gb_bTexture)
 	{
-		GLfloat vAmbientColor[] = { 0.2f, 0.2f, 0.2f, 0.9f };
-		GLfloat vDiffuseColor[] = { 0.3f, 0.3f, 0.3f, 0.9f };
-		GLfloat vSpecularColor[] = { 0.3f, 0.3f, 0.3f, 0.9f };
+		GLfloat vAmbientColor[] = { 0.2f, 0.0f, 0.0f, 0.5f };
+		GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.5f };
+		GLfloat vSpecularColor[] = { 0.1f, 0.0f, 0.0f, 0.5f };
 		glUniform4fv(locAmbient, 1, vAmbientColor);
 		glUniform4fv(locDiffuse, 1, vDiffuseColor);
 		glUniform4fv(locSpecular, 1, vSpecularColor);
@@ -315,9 +323,9 @@ void SetSelectedColor()
 
 void SetVoxelColor()
 {
-	GLfloat vAmbientColor[] = { 0.1f, 0.3f, 0.8f, 0.2f };
-	GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.2f };
-	GLfloat vSpecularColor[] = { 0.2f, 0.2f, 0.0f, 0.2f };
+	GLfloat vAmbientColor[] = { 0.1f, 0.3f, 0.8f, 0.1f };
+	GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.1f };
+	GLfloat vSpecularColor[] = { 0.2f, 0.2f, 0.0f, 0.1f };
 	glUniform4fv(locAmbient, 1, vAmbientColor);
 	glUniform4fv(locDiffuse, 1, vDiffuseColor);
 	glUniform4fv(locSpecular, 1, vSpecularColor);
@@ -325,9 +333,9 @@ void SetVoxelColor()
 
 void SetUsedVoxelColor()
 {
-	GLfloat vAmbientColor[] = { 0.5f, 0.0f, 0.2f, 0.3f };
-	GLfloat vDiffuseColor[] = { 0.3f, 0.0f, 0.1f, 0.3f };
-	GLfloat vSpecularColor[] = { 0.3f, 0.2f, 0.2f, 0.3f };
+	GLfloat vAmbientColor[] = { 0.5f, 0.0f, 0.2f, 0.2f };
+	GLfloat vDiffuseColor[] = { 0.3f, 0.0f, 0.1f, 0.2f };
+	GLfloat vSpecularColor[] = { 0.3f, 0.2f, 0.2f, 0.2f };
 	glUniform4fv(locAmbient, 1, vAmbientColor);
 	glUniform4fv(locDiffuse, 1, vDiffuseColor);
 	glUniform4fv(locSpecular, 1, vSpecularColor);
@@ -408,9 +416,8 @@ void onDisplay(void)
 	eyeFrame.RotateWorld(gb_eye_theta * 3.1415926 / 180.0, 1.0, 0.0, 0.0);
 	eyeFrame.RotateWorld(gb_eye_phi * 3.1415926 / 180.0, 0.0, 1.0, 0.0);
 	eyeFrame.MoveForward(-gb_eye_radius);
-	M3DMatrix44f mat;
-	eyeFrame.GetCameraMatrix(mat);
-	gb_modelViewMatrix.PushMatrix(mat);
+	eyeFrame.GetCameraMatrix(gb_hit_modelview);
+	gb_modelViewMatrix.PushMatrix(gb_hit_modelview);
 
 	// draw coordinate system
 	if(gb_bCoord)
@@ -471,7 +478,6 @@ void onDisplay(void)
 	gb_modelViewMatrix.PopMatrix();
 
 	glutSwapBuffers();
-	glutPostRedisplay();
 }
 
 
@@ -489,6 +495,7 @@ void onReshape(int w, int h)
 
 	gb_viewFrustum.SetPerspective(35.0f, float(w)/float(h), 0.001f, 100.0f);
 
+	memcpy(gb_hit_projection, gb_viewFrustum.GetProjectionMatrix(), sizeof(float) * 16);
 	gb_projectionMatrix.LoadMatrix(gb_viewFrustum.GetProjectionMatrix());
 	gb_transformPipeline.SetMatrixStacks(gb_modelViewMatrix, gb_projectionMatrix);
 }
@@ -568,7 +575,7 @@ void onMouseKey(int button, int state, int x, int y)
 		if(state == GLUT_UP) onMouseDrag(MOUSE_DRAG_MAX, MOUSE_DRAG_MAX);
 		break;
 	case GLUT_LEFT_BUTTON:
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		if(state == GLUT_DOWN) onMouseDrag(MOUSE_DRAG_MIN, MOUSE_DRAG_MIN);
 		if(state == GLUT_UP) onMouseDrag(MOUSE_DRAG_MAX, MOUSE_DRAG_MIN);
@@ -585,7 +592,7 @@ void onMouseKey(int button, int state, int x, int y)
 		break;
 	case GLUT_MIDDLE_BUTTON:
 		{
-			if(gb_bPoints)
+			if(!gb_bSkeleton)
 				return;
 			GLFrame eyeFrame;
 			eyeFrame.MoveUp(gb_eye_height);
@@ -595,7 +602,7 @@ void onMouseKey(int button, int state, int x, int y)
 			M3DMatrix44f mat;
 			eyeFrame.GetCameraMatrix(mat);
 			M3DVector3f pt;
-			bool bSuccess = HitTest(x, y, pt, mat, (float*)gb_viewFrustum.GetProjectionMatrix());
+			bool bSuccess = HitTest(x, y, pt, gb_hit_modelview, gb_hit_projection, 21);
 			if(bSuccess)
 				gb_treeskl.Select(pt);
 		}
@@ -615,34 +622,34 @@ void onKeyboard(unsigned char key, int x, int y)
 		gb_eye_height -= 0.2;
 		break;
 	case 's':	// simply the model
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.Simplify(gb_max_angle * 3.1415926 / 180.0, 0);
 		gb_max_angle *= 2;
 		break;
 	case 'S':
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.Simplify(gb_max_dist, 1);
 		gb_max_dist *= 2;
 		break;
 	case 'j':	// select the parent
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.Ascent();
 		break;
 	case 'k':	// select the first child
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.Descent();
 		break;
 	case 'h':	// select previous brother
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.Previous();
 		break;
 	case 'l':	// select next brother
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.Next();
 		break;
@@ -660,32 +667,32 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 		// change the radius of current node
 	case 'i':
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.ChangeRadius(0.0001);
 		printf("%s\n", "radius plus 0.0001");
 		break;
 	case 'I':
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.ChangeRadius(0.001);
 		printf("%s\n", "radius plus 0.001");
 		break;
 	case 'd':
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.ChangeRadius(-0.0001);
 		printf("%s\n", "radius minus 0.0001");
 		break;
 	case 'D':
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.ChangeRadius(-0.001);
 		printf("%s\n", "radius minus 0.001");
 		break;
 	case 'n':		// move the node nearer(in eye coordinate system)
 		{
-			if(gb_bPoints)
+			if(!gb_bSkeleton)
 				return;
 			vector[2] = 0.003;
 			MoveCurNode(vector);
@@ -694,7 +701,7 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 	case 'f':		// move the node farther(in eye coordinate system)
 		{
-			if(gb_bPoints)
+			if(!gb_bSkeleton)
 				return;
 			vector[2] = -0.003;
 			MoveCurNode(vector);
@@ -703,7 +710,7 @@ void onKeyboard(unsigned char key, int x, int y)
 		break;
 	case 'g':		// generate a new child
 		{
-			if(gb_bPoints)
+			if(!gb_bSkeleton)
 				return;
 			vector[0] = 1;
 			M3DVector3f wol;
@@ -712,12 +719,12 @@ void onKeyboard(unsigned char key, int x, int y)
 		}
 		break;
 	case 'p':		// pull out the current select subtree(exclude current node)
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.Delete(0);
 		break;
 	case 'P':		// pull out the current select subtree(include current node)
-		if(gb_bPoints)
+		if(!gb_bSkeleton)
 			return;
 		gb_treeskl.Delete(1);
 		break;
@@ -813,7 +820,7 @@ void onSpecial(int key, int x, int y)
 	{
 	case GLUT_KEY_LEFT:
 		{
-			if(gb_bPoints)
+			if(!gb_bSkeleton)
 				return;
 			vector[0] = -0.003;
 			MoveCurNode(vector);
@@ -822,7 +829,7 @@ void onSpecial(int key, int x, int y)
 		break;
 	case GLUT_KEY_RIGHT:
 		{
-			if(gb_bPoints)
+			if(!gb_bSkeleton)
 				return;
 			vector[0] = 0.003;
 			MoveCurNode(vector);
@@ -831,7 +838,7 @@ void onSpecial(int key, int x, int y)
 		break;
 	case GLUT_KEY_UP:
 		{
-			if(gb_bPoints)
+			if(!gb_bSkeleton)
 				return;
 			vector[1] = 0.003;
 			MoveCurNode(vector);
@@ -840,7 +847,7 @@ void onSpecial(int key, int x, int y)
 		break;
 	case GLUT_KEY_DOWN:
 		{
-			if(gb_bPoints)
+			if(!gb_bSkeleton)
 				return;
 			vector[1] = -0.003;
 			MoveCurNode(vector);
@@ -875,7 +882,7 @@ int main(int argc, char* argv[])
 	gltSetWorkingDirectory(argv[0]);
 
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowSize(800, 600);
 	glutCreateWindow("tree skeleton manipulation");
 	glutReshapeFunc(onReshape);
