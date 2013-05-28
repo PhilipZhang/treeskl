@@ -6,7 +6,7 @@
 
 * Creation Date : 22-05-2013
 
-* Last Modified : Mon 27 May 2013 07:27:17 PM CST
+* Last Modified : Tue 28 May 2013 08:50:05 PM CST
 
 * Created By : Philip Zhang 
 
@@ -44,7 +44,7 @@ void CVoxelModel::IndexPoints(CTreePointCloud *pPointCloud, int sampleId)
 	case 0:
 		m_fThreshold = 0.5;
 		m_fBranchRatio = 1.0 / 13.0;
-		m_iMaxStep = 4;
+		m_iMaxStep = 5;
 		m_fAngleCos = 0.5;
 		m_iSlicesX = 50;
 		break;
@@ -53,20 +53,20 @@ void CVoxelModel::IndexPoints(CTreePointCloud *pPointCloud, int sampleId)
 		m_fBranchRatio = 1.0 / 13.0;
 		m_iMaxStep = 4;
 		m_fAngleCos = 0.5;
-		m_iSlicesX = 80;
+		m_iSlicesX = 50;
 		break;
 	case 2:
 		m_fThreshold = 0.5;
-		m_fBranchRatio = 1.0 / 10.0;
+		m_fBranchRatio = 1.0 / 13.0;
 		m_iMaxStep = 6;
 		m_fAngleCos = 0.5;
 		m_iSlicesX = 80;
 		break;
 	case 3:
 		m_fThreshold = 0.4;
-		m_fBranchRatio = 1.0 / 14.0;
+		m_fBranchRatio = 1.0 / 13.0;
 		m_iMaxStep = 4;
-		m_fAngleCos = 0.0;
+		m_fAngleCos = 0.5;
 		m_iSlicesX = 80;
 		break;
 	}

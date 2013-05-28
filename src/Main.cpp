@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Mon 27 May 2013 08:40:37 PM CST
+ * Last Modified : Tue 28 May 2013 08:37:49 PM CST
 
  * Created By : Philip Zhang 
 
@@ -58,6 +58,7 @@ bool				gb_bPoints = false;			// whether display point cloud
 bool				gb_bSkeleton = false;		// whether display skeleton
 bool				gb_bVoxel = false;
 bool				gb_bOnlyVoxel = false;
+bool				gb_bTransparent = true;
 GLTriangleBatch     gb_sphereBatch;			// batch of sphere
 GLBatch				gb_cubeBatch;			// batch of voxel cube
 GLBatch				gb_axisBatches[6];		// batch of axis
@@ -298,9 +299,9 @@ void SetGeneralColor()
 {
 	if(!gb_bTexture)
 	{
-		GLfloat vAmbientColor[] = { 0.2f, 0.0f, 0.0f, 0.5f };
-		GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.5f };
-		GLfloat vSpecularColor[] = { 0.1f, 0.0f, 0.0f, 0.5f };
+		GLfloat vAmbientColor[] = { 0.2f, 0.0f, 0.0f, 0.9f };
+		GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.9f };
+		GLfloat vSpecularColor[] = { 0.1f, 0.0f, 0.0f, 0.9f };
 		glUniform4fv(locAmbient, 1, vAmbientColor);
 		glUniform4fv(locDiffuse, 1, vDiffuseColor);
 		glUniform4fv(locSpecular, 1, vSpecularColor);
@@ -308,6 +309,20 @@ void SetGeneralColor()
 }
 
 void SetSelectedColor()
+{
+	if(!gb_bTexture)
+	{
+		// brown
+		GLfloat vAmbientColor[] = { 1.0f, 0.5f, 0.0f, 0.9f };
+		GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.9f };
+		GLfloat vSpecularColor[] = { 0.1f, 0.0f, 0.0f, 0.9f };
+		glUniform4fv(locAmbient, 1, vAmbientColor);
+		glUniform4fv(locDiffuse, 1, vDiffuseColor);
+		glUniform4fv(locSpecular, 1, vSpecularColor);
+	}
+}
+
+void SetSubtreeColor()
 {
 	if(!gb_bTexture)
 	{
@@ -409,6 +424,10 @@ void onDisplay(void)
 {
 	// Clear the window and the depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	if(gb_bTransparent)
+		glEnable(GL_BLEND);
+	else
+		glDisable(GL_BLEND);
 
 	// calculate the view matrix.
 	GLFrame eyeFrame;
@@ -438,7 +457,7 @@ void onDisplay(void)
 		glUniform3fv(locLight, 1, vEyeLight);
 		glUniform1i(locColorMap, 0);
 		glUniform1i(locNormalMap, 1);
-		gb_treeskl.Display(SetGeneralColor, SetSelectedColor, 0);
+		gb_treeskl.Display(0);
 	}
 	else
 	{
@@ -447,16 +466,16 @@ void onDisplay(void)
 			if(gb_bPoints)
 			{
 				//GLfloat vPointColor[] = { 1.0, 1.0, 0.0, 0.6 };
-				GLfloat vPointColor[] = { 0.2, 0.0, 0.0, 0.9 };
+				GLfloat vPointColor[] = { 0.8, 0.0, 0.0, 0.9 };
 				gb_shaderManager.UseStockShader(GLT_SHADER_FLAT, gb_transformPipeline.GetModelViewProjectionMatrix(), vPointColor);
-				gb_treeskl.Display(NULL, NULL, 1);
+				gb_treeskl.Display(1);
 			}
 			if(gb_bSkeleton)
 			{
 				GLfloat vEyeLight[] = { -100.0f, 100.0f, 150.0f };
 				glUseProgram(adsPhongShader);
 				glUniform3fv(locLight, 1, vEyeLight);
-				gb_treeskl.Display(SetGeneralColor, SetSelectedColor, 0);
+				gb_treeskl.Display(0);
 			}
 		}
 		if(gb_bVoxel)
@@ -470,11 +489,16 @@ void onDisplay(void)
 			gb_treeskl.DisplayVoxel();
 			glPolygonMode(GL_FRONT, GL_FILL);
 		}
+		if(!gb_bOnlyVoxel && gb_bSkeleton)
+		{
+			// draw selected ball
+			glClear(GL_DEPTH_BUFFER_BIT);
+			GLfloat vEyeLight[] = { -100.0f, 100.0f, 150.0f };
+			glUseProgram(adsPhongShader);
+			glUniform3fv(locLight, 1, vEyeLight);
+			gb_treeskl.DisplaySelected();
+		}
 	}
-	//glUniformMatrix4fv(locMVP, 1, GL_FALSE, gb_transformPipeline.GetModelViewProjectionMatrix());
-	//glUniformMatrix4fv(locMV, 1, GL_FALSE, gb_transformPipeline.GetModelViewMatrix());
-	//glUniformMatrix3fv(locNM, 1, GL_FALSE, gb_transformPipeline.GetNormalMatrix());
-	//gb_sphereBatch.Draw();
 	gb_modelViewMatrix.PopMatrix();
 
 	glutSwapBuffers();
@@ -621,6 +645,11 @@ void onKeyboard(unsigned char key, int x, int y)
 	case '-':
 		gb_eye_height -= 0.2;
 		break;
+	case 'a':
+		if(!gb_bSkeleton)
+			return;
+		gb_treeskl.Simplify(5, 2);
+		break;
 	case 's':	// simply the model
 		if(!gb_bSkeleton)
 			return;
@@ -669,26 +698,26 @@ void onKeyboard(unsigned char key, int x, int y)
 	case 'i':
 		if(!gb_bSkeleton)
 			return;
-		gb_treeskl.ChangeRadius(0.0001);
-		printf("%s\n", "radius plus 0.0001");
+		gb_treeskl.ChangeRadius(0.001, 0);
+		printf("%s\n", "radius plus 0.001");
 		break;
 	case 'I':
 		if(!gb_bSkeleton)
 			return;
-		gb_treeskl.ChangeRadius(0.001);
-		printf("%s\n", "radius plus 0.001");
+		gb_treeskl.ChangeRadius(0.001, 1);
+		printf("%s\n", "radius plus 0.001 recursively");
 		break;
 	case 'd':
 		if(!gb_bSkeleton)
 			return;
-		gb_treeskl.ChangeRadius(-0.0001);
-		printf("%s\n", "radius minus 0.0001");
+		gb_treeskl.ChangeRadius(-0.001, 0);
+		printf("%s\n", "radius minus 0.001");
 		break;
 	case 'D':
 		if(!gb_bSkeleton)
 			return;
-		gb_treeskl.ChangeRadius(-0.001);
-		printf("%s\n", "radius minus 0.001");
+		gb_treeskl.ChangeRadius(-0.001, 1);
+		printf("%s\n", "radius minus 0.001 recursively");
 		break;
 	case 'n':		// move the node nearer(in eye coordinate system)
 		{
@@ -744,6 +773,9 @@ void onKeyboard(unsigned char key, int x, int y)
 	case 't':		// load or unload texture
 		gb_bTexture = !gb_bTexture;
 		UpdateLocations();
+		break;
+	case 'T':
+		gb_bTransparent = !gb_bTransparent;
 		break;
 	case 'x':
 		gb_bCoord = !gb_bCoord;

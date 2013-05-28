@@ -6,7 +6,7 @@
 
 * Creation Date : 06-05-2013
 
-* Last Modified : Fri 24 May 2013 09:59:12 PM CST
+* Last Modified : Tue 28 May 2013 06:39:12 PM CST
 
 * Created By : Philip Zhang 
 
@@ -39,13 +39,14 @@ public:
 	void DisplayMesh(char*, CSkeletonNode *pCurNode
 					 );
 	// for gui display
-	void DisplayMesh(CSkeletonNode *pCurNode, int slices, SetColor General, SetColor Special);
+	void DisplayMesh(CSkeletonNode *pCurNode, int slices);
 	void SkeletonToPoint(vector<Float3f> &);
 	void Write(FILE *file, int no);
 	unsigned WritePoint(FILE *fout);
 	void Simplify(double, unsigned, CTreeSkeleton *);
 	void Select(M3DVector3f pt, CSkeletonNode **pCurNode);
 	void CheckRange(M3DVector3f maxRange, M3DVector3f minRange);
+	void ChangeRadius(float increase, unsigned mode);
 	void LinearRadius(float ratio);
 	void SquareRadius();
 public:
@@ -77,10 +78,10 @@ public:
 	void Ascent();
 	void Next();
 	void Previous();
-	void Display(SetColor General, SetColor Special, unsigned mode);
+	void Display(unsigned mode);
 	void DisplayVoxel();
 	void MoveCurNode(float vector[3]);
-	void ChangeRadius(float increase);
+	void ChangeRadius(float increase, unsigned mode);
 	void Simplify(double, unsigned mode);
 	void Select(M3DVector3f pt);
 	void Load(const char *filename);
@@ -91,6 +92,7 @@ public:
 	void LoadVoxelModel(int sampleId);
 	void ExtractSkeleton(unsigned mode = 0);
 	void SkeletonToPoint();
+	void DisplaySelected();
 
 protected:
 	CSkeletonNode *m_pRoot;

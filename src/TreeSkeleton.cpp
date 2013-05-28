@@ -21,6 +21,9 @@ extern GLint locMVP;
 extern GLint locMV;
 extern GLint locNM;
 
+void SetSelectedColor();
+void SetGeneralColor();
+void SetSubtreeColor();
 void SetVoxelColor();
 void SetUsedVoxelColor();
 
@@ -77,10 +80,8 @@ void CSkeletonNode::DisplayMesh(char *path, CSkeletonNode* cur)
 	}
 }
 
-void CSkeletonNode::DisplayMesh(CSkeletonNode *pCurNode, int slices, SetColor General, SetColor Special)
+void CSkeletonNode::DisplayMesh(CSkeletonNode *pCurNode, int slices)
 {
-	if(pCurNode == this)
-		Special();
 	// gb_modelViewMatrix transforms
 	gb_modelViewMatrix.PushMatrix();
 	gb_modelViewMatrix.Translate(m_pos[0], m_pos[1], m_pos[2]);
@@ -91,6 +92,8 @@ void CSkeletonNode::DisplayMesh(CSkeletonNode *pCurNode, int slices, SetColor Ge
 	gb_sphereBatch.Draw();
 	gb_modelViewMatrix.PopMatrix();
 	CSkeletonNode *pNode = m_pChild;
+	if(pCurNode == this)
+			SetSubtreeColor();
 	while(pNode)
 	{
 		GLTriangleBatch cylinderBatch;
@@ -109,11 +112,27 @@ void CSkeletonNode::DisplayMesh(CSkeletonNode *pCurNode, int slices, SetColor Ge
 		cylinderBatch.Draw();
 		gb_modelViewMatrix.PopMatrix();
 		
-		pNode->DisplayMesh(pCurNode, slices, General, Special);
+		pNode->DisplayMesh(pCurNode, slices);
 		pNode = pNode->m_pNext;
 	}
 	if(pCurNode == this)
-		General();
+		SetGeneralColor();
+}
+
+void CTreeSkeleton::DisplaySelected()
+{
+	if(m_pCurNode == NULL)
+		return;
+	gb_modelViewMatrix.PushMatrix();
+	gb_modelViewMatrix.Translate(m_pCurNode->m_pos[0], m_pCurNode->m_pos[1], m_pCurNode->m_pos[2]);
+	gb_modelViewMatrix.Scale(m_pCurNode->m_radius, m_pCurNode->m_radius, m_pCurNode->m_radius);
+	glUniformMatrix4fv(locMVP, 1, GL_FALSE, gb_transformPipeline.GetModelViewProjectionMatrix());
+	glUniformMatrix4fv(locMV, 1, GL_FALSE, gb_transformPipeline.GetModelViewMatrix());
+	glUniformMatrix3fv(locNM, 1, GL_FALSE, gb_transformPipeline.GetNormalMatrix());
+	SetSelectedColor();
+	gb_sphereBatch.Draw();
+	gb_modelViewMatrix.PopMatrix();
+	SetGeneralColor();
 }
 
 void CTreeSkeleton::SkeletonToPoint()
@@ -345,7 +364,7 @@ void CTreeSkeleton::Previous()
 	}
 }
 
-void CTreeSkeleton::Display(SetColor General, SetColor Special, unsigned mode)
+void CTreeSkeleton::Display(unsigned mode)
 {
 	/* for terminal testing
 	if(m_pRoot)
@@ -359,7 +378,7 @@ void CTreeSkeleton::Display(SetColor General, SetColor Special, unsigned mode)
 	case 0:		// for mesh view
 		if(m_pRoot)
 		{
-			m_pRoot->DisplayMesh(m_pCurNode, m_slices, General, Special);
+			m_pRoot->DisplayMesh(m_pCurNode, m_slices);
 		}
 		break;
 	case 1:		// for point view
@@ -397,11 +416,24 @@ void CTreeSkeleton::MoveCurNode(float vector[3])
 	m_pCurNode = pCurNode;
 }
 
-void CTreeSkeleton::ChangeRadius(float increase)
+void CTreeSkeleton::ChangeRadius(float increase, unsigned mode)
 {
 	if(m_pCurNode)
 	{
-		m_pCurNode->m_radius += increase;
+		m_pCurNode->ChangeRadius(increase, mode);
+	}
+}
+
+void CSkeletonNode::ChangeRadius(float value, unsigned mode)
+{
+	m_radius += value;
+	CSkeletonNode *pChild = m_pChild;
+	if(mode == 0)
+		return;
+	while(pChild)
+	{
+		pChild->ChangeRadius(value, 1);
+		pChild = pChild->m_pNext;
 	}
 }
 
@@ -476,24 +508,32 @@ void CTreeSkeleton::Load(const char *filename)
 // and all its sub nodes
 void CTreeSkeleton::Simplify(double max_angle, unsigned mode)
 {
-	assert(max_angle > 0.0);
+	assert(max_angle >= 0.0);
 	// if it's null or an end node, return.
 	if(!m_pCurNode)
 		return;
 	CSkeletonNode *pCurNode = m_pCurNode;
-	// vertical merge
-	if(mode == 0)
+	switch(mode)
 	{
-		CSkeletonNode *pChild = m_pCurNode->m_pChild;
-		while(pChild)
+	case 0:
+		// vertical merge
 		{
-			pChild->Simplify(max_angle, mode, this);
-			pChild = pChild->m_pNext;
+			CSkeletonNode *pChild = m_pCurNode->m_pChild;
+			while(pChild)
+			{
+				pChild->Simplify(max_angle, mode, this);
+				pChild = pChild->m_pNext;
+			}
 		}
-	}
-	if(mode == 1)
-	{
+		break;
+	case 1:
+		// horizontal merge
 		m_pCurNode->Simplify(max_angle, mode, this);
+		break;
+	case 2:
+		// small nodes elimination
+		m_pCurNode->Simplify(max_angle, mode, this);
+		break;
 	}
 	m_pCurNode = pCurNode;
 }
@@ -596,6 +636,30 @@ void CSkeletonNode::Simplify(double max_param, unsigned mode, CTreeSkeleton *tre
 				pChild->Simplify(max_param, mode, tree);
 				pChild = pChild->m_pNext;
 			}
+		}
+	}
+
+	if(mode == 2)
+	{
+		if(tree->m_pRoot == this)
+			return;
+		if(!m_pChild)
+		{
+			Float3f parPos(m_pParent->m_pos[0], m_pParent->m_pos[1], m_pParent->m_pos[2]);
+			Float3f pos(m_pos[0], m_pos[1], m_pos[2]);
+			float dist = (parPos - pos).length();
+			if(dist < m_pParent->m_radius * max_param)
+			{
+				tree->m_pCurNode = this;
+				tree->Delete(1);
+			}
+			return;
+		}
+		CSkeletonNode *pChild = m_pChild;
+		while(pChild)
+		{
+			pChild->Simplify(max_param, mode, tree);
+			pChild = pChild->m_pNext;
 		}
 	}
 }
