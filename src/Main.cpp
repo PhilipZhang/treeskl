@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Tue 28 May 2013 08:37:49 PM CST
+ * Last Modified : Thu 30 May 2013 12:29:57 PM CST
 
  * Created By : Philip Zhang 
 
@@ -346,11 +346,21 @@ void SetVoxelColor()
 	glUniform4fv(locSpecular, 1, vSpecularColor);
 }
 
+void SetEmptyVoxelColor()
+{
+	GLfloat vAmbientColor[] = { 0.5f, 0.5f, 0.0f, 0.1f };
+	GLfloat vDiffuseColor[] = { 0.0f, 0.0f, 0.0f, 0.1f };
+	GLfloat vSpecularColor[] = { 0.0f, 0.0f, 0.0f, 0.1f };
+	glUniform4fv(locAmbient, 1, vAmbientColor);
+	glUniform4fv(locDiffuse, 1, vDiffuseColor);
+	glUniform4fv(locSpecular, 1, vSpecularColor);
+}
+
 void SetUsedVoxelColor()
 {
 	GLfloat vAmbientColor[] = { 0.5f, 0.0f, 0.2f, 0.2f };
-	GLfloat vDiffuseColor[] = { 0.3f, 0.0f, 0.1f, 0.2f };
-	GLfloat vSpecularColor[] = { 0.3f, 0.2f, 0.2f, 0.2f };
+	GLfloat vDiffuseColor[] = { 0.0f, 0.0f, 0.0f, 0.2f };
+	GLfloat vSpecularColor[] = { 0.0f, 0.0f, 0.0f, 0.2f };
 	glUniform4fv(locAmbient, 1, vAmbientColor);
 	glUniform4fv(locDiffuse, 1, vDiffuseColor);
 	glUniform4fv(locSpecular, 1, vSpecularColor);

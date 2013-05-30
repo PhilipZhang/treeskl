@@ -6,7 +6,7 @@
 
 # Creation Date : 10-05-2013
 
-# Last Modified : Wed 22 May 2013 10:22:00 PM CST
+# Last Modified : Thu 30 May 2013 08:46:30 PM CST
 
 # Created By : Philip Zhang 
 
@@ -48,5 +48,5 @@ run:
 	./$(MAIN)
 
 add:
-	git add src/* shared/* include/* skls/* shaders/* textures/*
+	git add src/* shared/* include/* skls/* shaders/* textures/* wps/*
 	git add *

@@ -25,6 +25,7 @@ void SetSelectedColor();
 void SetGeneralColor();
 void SetSubtreeColor();
 void SetVoxelColor();
+void SetEmptyVoxelColor();
 void SetUsedVoxelColor();
 
 CSkeletonNode::CSkeletonNode(float x, float y, float z, float radius)
@@ -426,6 +427,13 @@ void CTreeSkeleton::ChangeRadius(float increase, unsigned mode)
 
 void CSkeletonNode::ChangeRadius(float value, unsigned mode)
 {
+	if(m_pParent)
+	{
+		if(m_radius + value > m_pParent->m_radius)
+			return;
+	}
+	if(m_radius + value <= 0.001)
+		return;
 	m_radius += value;
 	CSkeletonNode *pChild = m_pChild;
 	if(mode == 0)
@@ -724,6 +732,7 @@ void CTreeSkeleton::DisplayVoxel()
 			for(int k = 0; k < nums[2]; k++)
 			{
 				if(m_pVoxelModel->m_vvvVoxels[i][j][k].isEmpty)
+					//SetEmptyVoxelColor();
 					continue;
 				if(m_pVoxelModel->m_vvvVoxels[i][j][k].isUsed)
 				{
