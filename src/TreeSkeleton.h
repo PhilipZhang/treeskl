@@ -6,7 +6,7 @@
 
 * Creation Date : 06-05-2013
 
-* Last Modified : Tue 28 May 2013 06:39:12 PM CST
+* Last Modified : Mon 03 Jun 2013 08:05:50 PM CST
 
 * Created By : Philip Zhang 
 
@@ -93,6 +93,7 @@ public:
 	void ExtractSkeleton(unsigned mode = 0);
 	void SkeletonToPoint();
 	void DisplaySelected();
+	void DisplayBoundary();
 
 protected:
 	CSkeletonNode *m_pRoot;

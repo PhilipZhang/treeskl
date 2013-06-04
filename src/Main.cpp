@@ -6,7 +6,7 @@
 
  * Creation Date : 07-05-2013
 
- * Last Modified : Thu 30 May 2013 12:29:57 PM CST
+ * Last Modified : Tue 04 Jun 2013 10:00:11 PM CST
 
  * Created By : Philip Zhang 
 
@@ -58,6 +58,7 @@ bool				gb_bPoints = false;			// whether display point cloud
 bool				gb_bSkeleton = false;		// whether display skeleton
 bool				gb_bVoxel = false;
 bool				gb_bOnlyVoxel = false;
+bool				gb_bBoundary = false;
 bool				gb_bTransparent = true;
 GLTriangleBatch     gb_sphereBatch;			// batch of sphere
 GLBatch				gb_cubeBatch;			// batch of voxel cube
@@ -338,9 +339,12 @@ void SetSubtreeColor()
 
 void SetVoxelColor()
 {
-	GLfloat vAmbientColor[] = { 0.1f, 0.3f, 0.8f, 0.1f };
-	GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.1f };
-	GLfloat vSpecularColor[] = { 0.2f, 0.2f, 0.0f, 0.1f };
+	//GLfloat vAmbientColor[] = { 0.1f, 0.3f, 0.8f, 0.1f };
+	//GLfloat vDiffuseColor[] = { 0.1f, 0.0f, 0.0f, 0.1f };
+	//GLfloat vSpecularColor[] = { 0.2f, 0.2f, 0.0f, 0.1f };
+	GLfloat vAmbientColor[] = { 0.5f, 0.5f, 0.0f, 0.1f };
+	GLfloat vDiffuseColor[] = { 0.0f, 0.0f, 0.0f, 0.1f };
+	GLfloat vSpecularColor[] = { 0.0f, 0.0f, 0.0f, 0.1f };
 	glUniform4fv(locAmbient, 1, vAmbientColor);
 	glUniform4fv(locDiffuse, 1, vDiffuseColor);
 	glUniform4fv(locSpecular, 1, vSpecularColor);
@@ -358,12 +362,23 @@ void SetEmptyVoxelColor()
 
 void SetUsedVoxelColor()
 {
-	GLfloat vAmbientColor[] = { 0.5f, 0.0f, 0.2f, 0.2f };
-	GLfloat vDiffuseColor[] = { 0.0f, 0.0f, 0.0f, 0.2f };
-	GLfloat vSpecularColor[] = { 0.0f, 0.0f, 0.0f, 0.2f };
+	GLfloat vAmbientColor[] = { 0.7f, 0.1f, 0.1f, 0.07f };
+	GLfloat vDiffuseColor[] = { 0.0f, 0.0f, 0.0f, 0.07f };
+	GLfloat vSpecularColor[] = { 0.0f, 0.0f, 0.0f, 0.07f };
 	glUniform4fv(locAmbient, 1, vAmbientColor);
 	glUniform4fv(locDiffuse, 1, vDiffuseColor);
 	glUniform4fv(locSpecular, 1, vSpecularColor);
+}
+
+void SetBoundaryColor()
+{
+	GLfloat vAmbientColor[] = { 0.6f, 0.6f, 0.1f, 0.3f };
+	GLfloat vDiffuseColor[] = { 0.0f, 0.0f, 0.0f, 0.3f };
+	GLfloat vSpecularColor[] = { 0.0f, 0.0f, 0.0f, 0.3f };
+	glUniform4fv(locAmbient, 1, vAmbientColor);
+	glUniform4fv(locDiffuse, 1, vDiffuseColor);
+	glUniform4fv(locSpecular, 1, vSpecularColor);
+
 }
 
 void DrawCoordinateAxis()
@@ -476,9 +491,18 @@ void onDisplay(void)
 			if(gb_bPoints)
 			{
 				//GLfloat vPointColor[] = { 1.0, 1.0, 0.0, 0.6 };
-				GLfloat vPointColor[] = { 0.8, 0.0, 0.0, 0.9 };
+				GLfloat vPointColor[] = { 0.0, 0.7, 0.0, 0.9 };
 				gb_shaderManager.UseStockShader(GLT_SHADER_FLAT, gb_transformPipeline.GetModelViewProjectionMatrix(), vPointColor);
 				gb_treeskl.Display(1);
+
+				if(gb_bBoundary)
+				{
+					GLfloat vEyeLight[] = { -100.0f, 100.0f, 150.0f };
+					glUseProgram(adsPhongShader);
+					glUniform3fv(locLight, 1, vEyeLight);
+					SetBoundaryColor();
+					gb_treeskl.DisplayBoundary();
+				}
 			}
 			if(gb_bSkeleton)
 			{
@@ -779,6 +803,9 @@ void onKeyboard(unsigned char key, int x, int y)
 		gb_bBlack = !gb_bBlack;
 		if(gb_bBlack)	glClearColor(0.0, 0.0, 0.0, 1.0);
 		else	glClearColor(1.0, 1.0, 1.0, 1.0);
+		break;
+	case 'B':
+		gb_bBoundary = !gb_bBoundary;
 		break;
 	case 't':		// load or unload texture
 		gb_bTexture = !gb_bTexture;

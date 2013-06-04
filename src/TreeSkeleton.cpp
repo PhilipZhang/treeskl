@@ -761,6 +761,20 @@ void CTreeSkeleton::DisplayVoxel()
 	gb_modelViewMatrix.PopMatrix();
 }
 
+void CTreeSkeleton::DisplayBoundary()
+{
+	float *maxRange = m_pPointCloud->m_vMaxRange;
+	float *minRange = m_pPointCloud->m_vMinRange;
+	gb_modelViewMatrix.PushMatrix();
+	gb_modelViewMatrix.Scale((maxRange[0] - minRange[0]) / 2, (maxRange[1] - minRange[1]) / 2, (maxRange[2] - minRange[2]) / 2);
+	gb_modelViewMatrix.Translate((maxRange[0] + minRange[0]) / 2, (maxRange[1] + minRange[1]) / 2, (maxRange[2] + minRange[2]) / 2);
+	glUniformMatrix4fv(locMVP, 1, GL_FALSE, gb_transformPipeline.GetModelViewProjectionMatrix());
+	glUniformMatrix4fv(locMV, 1, GL_FALSE, gb_transformPipeline.GetModelViewMatrix());
+	glUniformMatrix3fv(locNM, 1, GL_FALSE, gb_transformPipeline.GetNormalMatrix());
+	gb_cubeBatch.Draw();
+	gb_modelViewMatrix.PopMatrix();
+}
+
 void CTreeSkeleton::LinearRadius(float ratio)
 {
 	if(m_pRoot == NULL)
